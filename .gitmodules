@@ -1,0 +1,6 @@
+[submodule "gatekeeper-backend"]
+	path = gatekeeper-backend
+	url = https://github.com/vientorepublic/gatekeeper-backend.git
+[submodule "gatekeeper-frontend"]
+	path = gatekeeper-frontend
+	url = https://github.com/vientorepublic/gatekeeper-frontend.git
