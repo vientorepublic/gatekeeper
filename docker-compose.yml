@@ -7,10 +7,13 @@ services:
     restart: unless-stopped
     env_file:
       - ./gatekeeper-backend/.env
+    networks:
+      - gatekeeper_internal
+      - gateway_shared_network
     ports:
       - "127.0.0.1:10001:3000"
     depends_on:
-      mariadb:
+      database:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -29,7 +32,7 @@ services:
       backend:
         condition: service_started
 
-  mariadb:
+  database:
     image: mariadb:12.2.1-ubi10-rc
     container_name: gatekeeper-mariadb
     restart: unless-stopped
@@ -38,6 +41,8 @@ services:
       MARIADB_DATABASE: gatekeeper
       MARIADB_USER: gatekeeper
       MARIADB_PASSWORD: gatekeeper
+    networks:
+      - gatekeeper_internal
     ports:
       - "127.0.0.1:10003:3306"
     volumes:
@@ -52,6 +57,8 @@ services:
     image: redis:8.4.0
     container_name: gatekeeper-redis
     restart: unless-stopped
+    networks:
+      - gatekeeper_internal
     ports:
       - "127.0.0.1:10004:6379"
     volumes:
@@ -61,6 +68,12 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+
+networks:
+  gatekeeper_internal:
+    driver: "bridge"
+  gateway_shared_network:
+    external: true
 
 volumes:
   mariadb_data:
