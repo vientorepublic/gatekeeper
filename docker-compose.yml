@@ -1,0 +1,67 @@
+services:
+  backend:
+    build:
+      context: ./gatekeeper-backend
+      dockerfile: Dockerfile
+    container_name: gatekeeper-backend
+    restart: unless-stopped
+    env_file:
+      - ./gatekeeper-backend/.env
+    ports:
+      - "3000:3000"
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./gatekeeper-frontend
+      dockerfile: Dockerfile
+    container_name: gatekeeper-frontend
+    restart: unless-stopped
+    env_file:
+      - ./gatekeeper-frontend/.env
+    ports:
+      - "5173:5173"
+    depends_on:
+      backend:
+        condition: service_started
+
+  mariadb:
+    image: mariadb:12.2.1-ubi10-rc
+    container_name: gatekeeper-mariadb
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: gatekeeper
+      MARIADB_USER: gatekeeper
+      MARIADB_PASSWORD: gatekeeper
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mariadb-admin", "ping", "-h", "localhost", "-u", "gatekeeper", "-pgatekeeper"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:8.4.0
+    container_name: gatekeeper-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  mariadb_data:
+  redis_data:
