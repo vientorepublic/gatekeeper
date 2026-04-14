@@ -9,6 +9,7 @@ services:
       - ./gatekeeper-backend/.env
     networks:
       - gatekeeper_internal
+      # Shared network for REST API Gateway (Remove if not needed)
       - gateway_shared_network
     ports:
       - "127.0.0.1:10001:3000"
@@ -72,6 +73,7 @@ services:
 networks:
   gatekeeper_internal:
     driver: "bridge"
+  # Shared network for REST API Gateway (Remove if not needed)
   gateway_shared_network:
     external: true
 
