@@ -34,7 +34,14 @@ git clone --recurse-submodules <root-repo-url>
 
 - 전체 아키텍처/역할/운영 관점 설명: 이 문서
 - 백엔드 상세 설정/엔드포인트/관측/테스트: `gatekeeper-backend/README.md`
-- 프론트엔드 상세 설정/개발/빌드 검증: `gatekeeper-frontend/README.md`
+- 프론트엔드 상세 설정/개발/빌드 검증/Cloudflare Pages 배포: `gatekeeper-frontend/README.md`
+
+## 배포
+
+프론트엔드는 SvelteKit Cloudflare 어댑터를 사용해 Cloudflare Pages에 배포합니다.
+Pages 프로젝트의 Root directory, Build command, Output directory와 환경 변수는
+`gatekeeper-frontend/README.md`의 [Cloudflare Pages 배포](gatekeeper-frontend/README.md#cloudflare-pages-배포)를
+따르세요.
 
 ## 개발 워크플로우
 
