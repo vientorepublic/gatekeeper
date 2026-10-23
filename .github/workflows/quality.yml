@@ -1,0 +1,104 @@
+name: Quality
+
+on:
+  pull_request:
+  merge_group:
+  workflow_call:
+    secrets:
+      BACKEND_READ_KEY:
+        required: true
+      FRONTEND_READ_KEY:
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  app:
+    name: ${{ matrix.app }} checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: backend
+            read_key: BACKEND_READ_KEY
+          - app: frontend
+            read_key: FRONTEND_READ_KEY
+    defaults:
+      run:
+        working-directory: gatekeeper-${{ matrix.app }}
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Resolve pinned app revision
+        id: revision
+        working-directory: .
+        run: echo "sha=$(git rev-parse HEAD:gatekeeper-${{ matrix.app }})" >> "$GITHUB_OUTPUT"
+      - name: Checkout private app
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/gatekeeper-${{ matrix.app }}
+          ref: ${{ steps.revision.outputs.sha }}
+          path: gatekeeper-${{ matrix.app }}
+          ssh-key: ${{ secrets[matrix.read_key] }}
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: gatekeeper-${{ matrix.app }}/package-lock.json
+      - name: Clean install
+        run: npm ci
+      - name: Lint
+        run: |
+          npm run lint
+          git diff --exit-code
+      - name: Backend types
+        if: matrix.app == 'backend'
+        run: npx tsc --noEmit --incremental false
+      - name: Frontend types
+        if: matrix.app == 'frontend'
+        run: npm run check
+      - name: Build
+        run: npm run build
+      - name: Backend unit tests
+        if: matrix.app == 'backend'
+        run: npm test -- --runInBand
+      - name: Backend integration tests
+        if: matrix.app == 'backend'
+        run: npm run test:e2e -- --runInBand
+      - name: Frontend unit tests
+        if: matrix.app == 'frontend'
+        run: npm test
+      - name: Frontend Node build
+        if: matrix.app == 'frontend'
+        run: npm run build:node
+
+  automation:
+    name: Deployment script checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: bash -n tools/ci/deploy-backend.sh
+      - run: python3 -m unittest discover -s tools/ci -p 'test_*.py' -v
+
+  gate:
+    name: PR quality gate
+    if: always()
+    needs: [app, automation]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Require all application checks
+        env:
+          RESULT: ${{ needs.app.result }}
+          AUTOMATION_RESULT: ${{ needs.automation.result }}
+        run: test "$RESULT" = success && test "$AUTOMATION_RESULT" = success
