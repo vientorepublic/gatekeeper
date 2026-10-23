@@ -25,7 +25,7 @@ The user explicitly requested GitHub operations through gh CLI, new feature work
 - Use gh for GitHub metadata/PRs/issues/checks/Releases, git for local history and transport. Use explicit repository selection, including explicit repo endpoints for gh api.
 - Feature PRs target dev. Deployment promotes verified dev to main through an ancestry-preserving PR merge, then publishes an app-version Release targeting the exact verified main SHA. Required checks/reviews cannot be bypassed.
 - Whole-project deployment includes the root composition Release after child Releases and final root main gitlinks are verified. Root has no npm package/version. App-scoped deployment does not require unrelated app or root Releases.
-- After release publication, classify remote ancestry and tree differences. Prefer a protection-compliant, non-forced dev ref fast-forward to verified main when dev is its ancestor; use a main-to-dev PR only when required by protection or divergence. If main is already included, do not repeat synchronization to clear an ahead badge. Follow AGENTS.md and the release runbook for exact checks. Root release pins remain main SHAs; local child dev SHAs can intentionally differ and must be reported rather than silently staged.
+- After release publication, classify remote ancestry and tree differences. Prefer a protection-compliant, non-forced dev ref fast-forward to verified main when dev is its ancestor; use a main-to-dev PR only when required by protection or divergence. If main is already included, do not repeat synchronization to clear an ahead badge. Follow AGENTS.md and the release runbook for exact checks. Normal development gitlinks default to verified child origin/dev SHAs; explicit release compositions retain exact main/release SHAs and published trees remain immutable.
 - Creating these instructions did not perform deployment, branch creation, PR merges, or release publication. Actual remote branch/protection settings must be checked at execution time.
 
 ## Handling the mismatch safely
@@ -56,7 +56,7 @@ External library release, only if needed and separately authorized
 
 Today FlowAuth is an external npm dependency, so its package version is the shared dependency reference. A new backend/frontend version does not publish FlowAuth. A root commit cannot include uncommitted child files; it records only the child's HEAD.
 
-For release pins, fetch and verify the final main SHA is reachable on the intended child remote. If a feature branch was squash-merged, the old feature SHA is not the main release SHA. Record final main in the root and target its app Release/tag at that same SHA. Normal development can stop at dev integration without a Release; app-scoped deployment publishes only its requested release scope.
+For ordinary development pointers, fetch and verify each chosen child commit on origin/dev, then commit the parent after child publication. For explicit release pins, fetch and verify the final main SHA is reachable on the intended child remote. If a feature branch was squash-merged, the old feature SHA is not the main release SHA. Record final main in the root and target its app Release/tag at that same SHA. Normal development can stop at dev integration without a Release; app-scoped deployment publishes only its requested release scope.
 
 Avoid pointer-only churn caused by switching child branches. Inspect staged gitlinks with `git diff --cached --submodule=log` and `git ls-files --stage`; after committing compare `git ls-tree HEAD gatekeeper-backend gatekeeper-frontend` with the intended child SHAs. A clean child status does not prove its commit was pushed.
 
@@ -75,3 +75,17 @@ is six commits ahead at `c8098ec`, including real operations/memory changes; it 
 not be classified as history-only. See [the investigation](../06-git-sync-guidelines/findings.md).
 The updated lifecycle avoids creating the reverse merge when a permitted ref
 fast-forward is sufficient. Existing published ancestry is retained.
+
+## Merged feature cleanup and default development pointers
+
+User policy update (2026-10-23): after a confirmed feature PR merge, remove its
+verified local/origin feat/* branches once all changes are integrated, no new commits
+or dependent open PRs remain, and no worktree uses the branch. Use safe local -d
+and gh for remote deletion; preserve anything that cannot be proven safe. Unmerged
+features and shared main/dev are retained. AGENTS.md and the release runbook contain
+the operational checks.
+
+Normal root development commits pin exact verified child origin/dev SHAs. Explicit
+release/deployment compositions still pin verified main/release SHAs. No published
+tag/tree is rewritten when returning development pointers to dev. This replaces the
+older assumption that every root pointer change must always select main.

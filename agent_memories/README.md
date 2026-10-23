@@ -22,7 +22,7 @@ Read the root [AGENTS.md](../AGENTS.md) and this index at the beginning of each 
 - [04 — Backend CI and WireGuard deployment](04-backend-ci-deployment/change.md) — resolved/deployed; both app v1.0.0 Releases and root composition release published, fifth backend rollout verified Healthy, scoped CI keys and isolated server releases configured, root/backend dev synchronization complete.
 - [05 — Cloudflare Pages build follow-up](05-cloudflare-build-follow-up/findings.md) — resolved/deployed; Pages Node mismatch corrected without source changes, production HTTP smoke passed, PR #50 merged, and frontend dev synchronized.
 
-- [06 — Git synchronization guidelines](06-git-sync-guidelines/findings.md) — resolved; identified history-only reverse merge commits and defined protection-compliant fast-forward synchronization; follow-up publication includes user-requested development pointers.
+- [06 — Git synchronization guidelines](06-git-sync-guidelines/findings.md) — resolved; identified history-only reverse merge commits and defined protection-compliant fast-forward synchronization; follow-up publication includes development pointers, merged-feature cleanup policy, and origin/dev as the default pointer source.
 
 Add new topics as `07-descriptive-topic/`, `08-another-topic/`, and so on. Classify note content as an investigation, plan, decision, or handoff; track `draft`, `active`, `blocked`, `resolved`, or `superseded` explicitly. A proposed plan is not an accepted architectural decision.
 
