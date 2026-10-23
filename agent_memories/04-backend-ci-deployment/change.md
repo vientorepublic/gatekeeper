@@ -170,6 +170,21 @@ failure alone or bypass it on the sync PR.
 Local direct SSH to the tunnel host timed out; production access must be verified from
 the Actions runner using the configured WireGuard and server SSH secrets.
 
+Root [PR #2](https://github.com/vientorepublic/gatekeeper/pull/2) and
+[main promotion #3](https://github.com/vientorepublic/gatekeeper/pull/3) merged after
+all hosted quality checks passed. First root main is `cb41dc3a6de3d12ecab5e51b9a8fd67ad54220e0`;
+its tree matches the verified feature tree and gitlinks match the app releases.
+[First deployment run](https://github.com/vientorepublic/gatekeeper/actions/runs/39922230022)
+passed all quality checks, credential preparation, WireGuard connection, and root SSH
+authentication. Remote rollout failed because `/root/Gatekeeper` does not exist.
+Cleanup succeeded. No build/container replacement occurred.
+
+Remediation: when the default path is absent, search at most three levels below root's
+home for case-insensitive Gatekeeper directories with Git and Compose metadata.
+Use only a unique candidate; fail with matching directory diagnostics when missing or
+ambiguous. Do not create a production checkout or choose between multiple clones.
+Regression coverage adds alternate case/parent, ambiguity, and missing-path behavior.
+
 Workflow/script implementation and local logic checks are complete. AC-2 remote
 enforcement and actual Actions/WireGuard/SSH/Compose execution remain unverified.
 No secrets were read or changed; no remote configuration was mutated. No commit, push,

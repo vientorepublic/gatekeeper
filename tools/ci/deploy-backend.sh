@@ -10,7 +10,26 @@ fi
 # Serialize server-side deployments, including runs outside GitHub Actions.
 exec 9> "$HOME/.gatekeeper-backend-deploy.lock"
 flock -w 120 9
-cd "$HOME/Gatekeeper"
+project_dir="$HOME/Gatekeeper"
+if [[ ! -d "$project_dir" ]]; then
+  project_dir=''
+  while IFS= read -r candidate; do
+    if [[ -e "$candidate/.git" && -f "$candidate/docker-compose.yml" ]]; then
+      if [[ -n "$project_dir" ]]; then
+        echo 'Multiple Gatekeeper checkouts found; configure a unique deployment checkout.' >&2
+        exit 1
+      fi
+      project_dir="$candidate"
+    fi
+  done < <(find "$HOME" -mindepth 1 -maxdepth 3 -type d -iname gatekeeper -print)
+  if [[ -z "$project_dir" ]]; then
+    echo 'No Gatekeeper Git/Compose checkout found under the root home directory.' >&2
+    find "$HOME" -mindepth 1 -maxdepth 3 -type d -iname '*gatekeeper*' -print >&2
+    exit 1
+  fi
+fi
+cd "$project_dir"
+printf 'Deployment checkout: %s\n' "$project_dir"
 
 if [[ "$(git symbolic-ref --short HEAD)" != main ]]; then
   echo 'The server meta checkout must be on main.' >&2
