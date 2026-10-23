@@ -1,13 +1,18 @@
 # Guideline Compliance and Code Quality Audit
 
 - Kind: investigation / implementation handoff
-- Status: resolved locally; publication pending
+- Status: resolved; subsequently published in app v1.0.0 Releases
 - Created / last verified: 2026-10-23
 - Scope: both app repositories and the root guideline checker
 - Baseline: unpublished dependency refresh on `codex/dependency-security-refresh`; backend HEAD `8a23d1831ee5d6c79bcf28c59e550eeddbe22ffd`, frontend HEAD `c70749cc1ea66367d3cc5a0f4b4d21196eb465a6`.
 - Related: [dependency refresh](../01-dependency-security-refresh/findings.md), [architecture](../repo/project-architecture.md), [verification](../repo/verification-notes.md).
 
 ## Scope and method
+
+Publication update: the unpublished/0.0.2 snapshot below is historical. Both final
+1.0.0 changesets were revalidated and published, and backend deployment succeeded;
+see [publication evidence](../04-backend-ci-deployment/change.md). Hosted frontend
+Pages and its ancestry sync remain [deferred](../05-cloudflare-build-follow-up/findings.md).
 
 The inventory covers **109 app source/configuration/documentation files**, excluding dependencies, Git internals, generated/build output, lockfile contents, and incremental compiler artifacts. Run `node tools/check-agent-guidelines.mjs --inventory` for the current file list. Flow review covered auth/session/key management, routing/public paths/proxy streaming, cache/state/lifecycle, input/error handling, components/accessibility, configuration, and test fixtures.
 

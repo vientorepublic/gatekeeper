@@ -4,7 +4,7 @@
 - Status: current
 - Last verified: 2026-10-23
 - Scope: root, backend, frontend, external FlowAuth integration
-- Evidence baseline: root gitlinks `8a23d1831ee5d6c79bcf28c59e550eeddbe22ffd` (backend) and `c70749cc1ea66367d3cc5a0f4b4d21196eb465a6` (frontend), plus the local manifest modifications described in [repository-workflow.md](repository-workflow.md).
+- Evidence baseline: deployed root `fec44ad1c060ba810167ad5ddae432e2e98fe20b`, composition `release-20261023.1`; historical initial pins and local changes remain documented in [repository-workflow.md](repository-workflow.md).
 
 ## Repository topology
 
@@ -12,8 +12,8 @@ The root tracks orchestration and two `160000` gitlinks. Backend and frontend ha
 
 Both apps now have published `v1.0.0` Releases: backend main
 `7c6fccede657ab7cdac25725a5726e829a6e199c`, frontend main
-`ec3586823f5d205ee9d8d7b522e077b96721239b`. The root pointer update is being
-published through its PR flow. The earlier 0.0.2 proposal was superseded by the
+`ec3586823f5d205ee9d8d7b522e077b96721239b`. Root composition `release-20261023.1`
+pins those exact main SHAs. The earlier 0.0.2 proposal was superseded by the
 existing major bump for configuration/login/toolchain migration. Backend uses NestJS
 12/Keyv 6; frontend uses SvelteKit 3/Vite 8. Both request `flowauth-oauth2-client`
 `^4.3.4`; matching dependency ranges alone do not prove app contract compatibility.
@@ -59,12 +59,24 @@ Frontend responses and restored users are validated at runtime. Browser callback
 
 Root `.github/workflows/quality.yml` now defines PR/merge-group checks for the pinned
 apps; `deploy-backend.yml` runs the same checks on root main push before a WireGuard/SSH
-backend-only Compose rollout. These files are prepared locally and have not been
-published or executed in Actions. All three repositories are private, requiring a
-separate read token for submodule checkout. GitHub returned HTTP 403 requiring a plan
+backend-only Compose rollout. The fifth deployment succeeded at 2026-10-23 17:46 JST,
+with image/container/HTTP health verified. The primary server clone `/root/gatekeeper`
+has operator gitlink changes and is preserved; deployment uses an exact-SHA clone in
+`/root/.gatekeeper-releases`, existing env symlinks, and the existing Compose project.
+Root fetch uses the short-lived CI token without recursive fetch; each private app
+checkout uses its own read-only deploy key. Server-side backend fetch credentials are
+temporary and removed before Docker. GitHub returned HTTP 403 requiring a plan
 upgrade or public visibility for root rulesets/branch protection; merge enforcement
 is not active. See [CI/deployment setup](../../docs/backend-ci-deployment.md) and
 [implementation evidence](../04-backend-ci-deployment/change.md).
+
+Frontend v1.0.0 is deployed to Cloudflare Pages at `gateway.viento.me`. Pages v3
+required an explicit Node 24.22.1 selector because its default Node 22.16.0 failed
+SvelteKit 3's engine requirement. Build tool selectors are encrypted project bindings
+for production and preview; plain dashboard variables were superseded by the
+repository Wrangler configuration. Production deployment and HTTP smoke succeeded,
+then PR #50 synchronized main into dev. See [Cloudflare follow-up](../05-cloudflare-build-follow-up/findings.md)
+for exact deployment and synchronization evidence and validation limits.
 
 ## Maintenance
 
