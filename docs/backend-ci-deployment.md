@@ -73,6 +73,9 @@ PR에서 한 번 실행한 후, 루트 저장소 **Settings → Rules → Rulese
 - Linux, Bash, Git, `flock`, curl, Docker Engine과 `--wait`를 지원하는 Compose plugin을
   설치하고 root SSH 키 접속을 허용해야 합니다. SSH 포트는 22입니다.
 - `/root/Gatekeeper`는 루트 저장소 clone이며 `main` 브랜치에 있어야 합니다.
+  기본 경로가 없다면 홈 디렉터리 3단계 이내에서 이름이 대소문자 구분 없이 Gatekeeper인
+  Git/Compose clone을 찾습니다. 후보가 정확히 하나일 때만 사용하며 여러 clone 중 임의로
+  선택하거나 새로 clone하지 않습니다.
   origin fetch와 백엔드 서브모듈 fetch가 비대화식으로 가능해야 합니다.
   서버의 로컬 수정이나 분기된 이력은 자동 초기화하지 않고 배포를 실패시킵니다.
 - 서버의 `.gitmodules`와 submodule 등록을 먼저 확인합니다. 로컬 개발 환경의 등록 이름

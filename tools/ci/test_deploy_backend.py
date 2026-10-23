@@ -54,7 +54,14 @@ class DeploymentTests(unittest.TestCase):
     def run_deploy(self, sha=SHA, **overrides):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            (root / "Gatekeeper/gatekeeper-backend/.git").mkdir(parents=True)
+            project = root / overrides.pop("MOCK_PROJECT_PATH", "Gatekeeper")
+            (project / "gatekeeper-backend/.git").mkdir(parents=True)
+            (project / ".git").mkdir()
+            (project / "docker-compose.yml").touch()
+            if overrides.pop("MOCK_AMBIGUOUS", ""):
+                other = root / "projects/gatekeeper"
+                (other / ".git").mkdir(parents=True)
+                (other / "docker-compose.yml").touch()
             binary_dir = root / "bin"
             binary_dir.mkdir()
             for name in ("git", "docker", "curl", "flock"):
@@ -90,6 +97,22 @@ class DeploymentTests(unittest.TestCase):
         result, commands = self.run_deploy(sha="main; unexpected-command")
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(commands, [])
+
+    def test_locates_unique_checkout_with_different_case_and_parent(self):
+        result, _ = self.run_deploy(MOCK_PROJECT_PATH="projects/GateKeeper")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("projects/GateKeeper", result.stdout)
+
+    def test_ambiguous_checkouts_never_fetch_or_deploy(self):
+        result, commands = self.run_deploy(MOCK_PROJECT_PATH="work/GateKeeper", MOCK_AMBIGUOUS="1")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse(any(command[0] in ("git", "docker") for command in commands))
+
+    def test_missing_checkout_reports_matching_directories_without_fetch(self):
+        result, commands = self.run_deploy(MOCK_PROJECT_PATH="gatekeeper-unrelated")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("gatekeeper-unrelated", result.stderr)
+        self.assertFalse(any(command[0] in ("git", "docker") for command in commands))
 
     def test_superseded_push_does_not_change_checkout_or_service(self):
         result, commands = self.run_deploy(MOCK_REMOTE_SHA="c" * 40)
