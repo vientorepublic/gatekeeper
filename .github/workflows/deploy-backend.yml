@@ -56,15 +56,23 @@ jobs:
       - name: Deploy exact main revision
         env:
           DEPLOY_SHA: ${{ github.sha }}
+          GH_TOKEN: ${{ github.token }}
+          BACKEND_READ_KEY: ${{ secrets.BACKEND_READ_KEY }}
         run: |
           set -euo pipefail
-          ssh -T -i "$RUNNER_TEMP/gatekeeper-ssh/key" \
+          github_host_keys=$(gh api meta --jq '.ssh_keys[] | "github.com " + .')
+          {
+            printf 'export GATEKEEPER_FETCH_TOKEN=%q\n' "$GH_TOKEN"
+            printf 'export GATEKEEPER_BACKEND_READ_KEY=%q\n' "$BACKEND_READ_KEY"
+            printf 'export GATEKEEPER_GITHUB_HOST_KEYS=%q\n' "$github_host_keys"
+            cat tools/ci/deploy-backend.sh
+          } | ssh -T -i "$RUNNER_TEMP/gatekeeper-ssh/key" \
             -o BatchMode=yes -o IdentitiesOnly=yes \
             -o StrictHostKeyChecking=yes \
             -o UserKnownHostsFile="$RUNNER_TEMP/gatekeeper-ssh/known_hosts" \
             -o ConnectTimeout=30 -o ConnectionAttempts=3 \
             -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
-            root@10.20.0.1 "bash -s -- $DEPLOY_SHA" < tools/ci/deploy-backend.sh
+            root@10.20.0.1 "bash -s -- $DEPLOY_SHA"
       - name: Remove tunnel and credentials
         if: always()
         run: |

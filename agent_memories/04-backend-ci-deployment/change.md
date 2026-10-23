@@ -185,6 +185,22 @@ Use only a unique candidate; fail with matching directory diagnostics when missi
 ambiguous. Do not create a production checkout or choose between multiple clones.
 Regression coverage adds alternate case/parent, ambiguity, and missing-path behavior.
 
+Path fix [PR #4](https://github.com/vientorepublic/gatekeeper/pull/4) and
+[promotion #5](https://github.com/vientorepublic/gatekeeper/pull/5) passed hosted checks
+and merged; root main became `72025b031d906e0c8c322f4751366ff887c4df93`.
+[Second deployment](https://github.com/vientorepublic/gatekeeper/actions/runs/39923173128)
+located `/root/gatekeeper` and authenticated over the tunnel, but root Git fetch failed:
+`could not read Username for 'https://github.com': No such device or address`.
+No application container replacement occurred.
+
+Credential remediation: send the job's short-lived root GITHUB_TOKEN, backend-only
+read key, and GitHub SSH host keys obtained through authenticated HTTPS over SSH stdin.
+The server uses a command-scoped credential helper for root fetch, removes that token
+from the environment, then uses a temporary backend SSH key/known_hosts directory with
+strict host verification and a command-scoped HTTPS-to-SSH URL rewrite for submodule
+fetch. Remove credential files on success/error and unset key variables before Docker.
+No durable credential helper, URL, or private key is written to the server checkout.
+
 Workflow/script implementation and local logic checks are complete. AC-2 remote
 enforcement and actual Actions/WireGuard/SSH/Compose execution remain unverified.
 No secrets were read or changed; no remote configuration was mutated. No commit, push,

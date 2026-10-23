@@ -76,7 +76,11 @@ PR에서 한 번 실행한 후, 루트 저장소 **Settings → Rules → Rulese
   기본 경로가 없다면 홈 디렉터리 3단계 이내에서 이름이 대소문자 구분 없이 Gatekeeper인
   Git/Compose clone을 찾습니다. 후보가 정확히 하나일 때만 사용하며 여러 clone 중 임의로
   선택하거나 새로 clone하지 않습니다.
-  origin fetch와 백엔드 서브모듈 fetch가 비대화식으로 가능해야 합니다.
+  워크플로우는 SSH 표준 입력으로 CI의 임시 루트 읽기 토큰과 백엔드 전용 읽기 키를
+  전달하므로 서버에 GitHub 자격 증명을 미리 저장할 필요가 없습니다. 토큰은 fetch
+  명령에만 임시 credential helper로 사용하고 Git 설정에 저장하지 않습니다. 백엔드 키는
+  임시 파일로 사용 후 실패 시에도 제거합니다. GitHub SSH host key는 runner가 HTTPS API로
+  검증해 전달하며 host 검증을 유지합니다. 서버에서 github.com에 연결할 수 있어야 합니다.
   서버의 로컬 수정이나 분기된 이력은 자동 초기화하지 않고 배포를 실패시킵니다.
 - 서버의 `.gitmodules`와 submodule 등록을 먼저 확인합니다. 로컬 개발 환경의 등록 이름
   불일치는 이번 작업에서 수정하지 않았습니다.
