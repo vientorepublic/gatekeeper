@@ -55,3 +55,16 @@ development composition supersedes the usual instruction to leave dev checkout
 pointer differences unstaged. Published main/tag/release pins remain unchanged.
 No application source, package version, installation, PR merge, release, or deployment
 is part of this follow-up. The publication branch is feat/git-sync-guidelines.
+
+## Subsequent branch lifecycle policy
+
+The user subsequently requested a persistent rule for merged feature branch cleanup
+and dev as the default submodule pointer source, plus committing/pushing that rule.
+Updated AGENTS.md, the release runbook, and the canonical repository workflow.
+Acceptance: remove conflicting unconditional main-pointer/preserve-feature wording;
+require confirmed merge, unchanged tips, integrated work, no dependent open PR or
+worktree, and safe deletion; pin verified origin/dev for normal development while
+preserving explicit immutable release compositions. No app files or pointers changed
+because both existing gitlinks already equal origin/dev. This request publishes the
+rule on feat/branch-cleanup-dev-pins; actual historical branch deletion and PR merges
+are outside this instruction-edit request.

@@ -44,7 +44,7 @@ GitHub Release 생성과 실제 서비스 배포 성공은 구분합니다. 저�
 2. `gh release list/view`와 `gh api`로 동일 태그·릴리즈의 존재와 실제 태그 대상 커밋을 확인합니다. 기존 태그가 다른 SHA면 덮어쓰거나 옮기지 않습니다. 같은 SHA·같은 버전의 정상 릴리즈라면 재사용합니다. 요청 타임아웃 후에도 먼저 존재 여부를 확인해 중복 생성을 피합니다.
 3. 검증 결과·변경 사항·호환성·migration·검증 한계가 포함된 릴리즈 노트 파일을 만들고 `gh release create <tag> --repo <owner/repo> --target <full-main-sha> --title <title> --notes-file <notes-file>`로 정식 릴리즈를 게시합니다. 기존 태그를 사용하면 대상 확인 후 `--verify-tag`를 추가합니다. `--target`만으로 이미 존재하는 태그가 재지정되지는 않습니다. draft/prerelease는 명시된 요청일 때 사용합니다.
 4. `gh release view`로 게시 상태·태그·URL을 확인하고 `gh api`로 태그가 최종 main SHA로 해석되는지 검증합니다. annotated tag라면 tag object를 따라 실제 commit까지 확인합니다. 앱 버전·main SHA·태그·Release URL을 기록합니다.
-5. 앱 릴리즈가 확인된 뒤 루트 피처에서 해당 main SHA만 gitlink에 반영합니다. 자식 dev로 복귀하기 전에 main SHA를 checkout해 stage하거나 정확한 gitlink를 검증해 반영하고, 앱 미커밋 작업은 포함하지 않습니다. 루트에는 별도 package/version을 만들지 않습니다.
+5. 명시적인 배포·릴리즈 작업에서는 앱 릴리즈가 확인된 뒤 루트 피처에서 해당 main SHA만 gitlink에 반영합니다. 자식 dev로 복귀하기 전에 main SHA를 checkout해 stage하거나 정확한 gitlink를 검증해 반영하고, 앱 미커밋 작업은 포함하지 않습니다. 루트에는 별도 package/version을 만들지 않습니다.
 6. 루트 피처 커밋·`git push --recurse-submodules=check` → `feat/* → dev` PR → `dev → main` PR 순으로 처리합니다. 각 단계의 최종 tree에서 gitlink가 릴리즈된 앱 SHA와 같은지 확인합니다. 변경 없는 앱은 검증된 기존 포인터를 유지합니다.
 7. 프로젝트 전체 배포에서는 최종 루트 main SHA에 조합 Release를 게시합니다. 기존 루트 태그 규칙을 우선 사용하고, 없으면 충돌 없는 `release-YYYYMMDD.N`을 사용합니다. 이는 npm SemVer가 아닙니다. 노트에 루트 SHA, 각 앱의 버전·SHA·태그·URL, 실제 배포 상태를 포함합니다. 동일 배포 재시도에서는 기존 조합 릴리즈를 재사용합니다.
 
@@ -61,7 +61,13 @@ GitHub Release 생성과 실제 서비스 배포 성공은 구분합니다. 저�
    GitHub의 ahead/behind 숫자를 없애려고 양방향 PR 병합을 반복하면 새 병합 커밋이 계속 생깁니다. 배지를 없애기 위한 빈 커밋·main 승격·재배포·릴리즈를 만들지 않고, 이미 공개된 dev를 main으로 reset/강제 갱신하지 않습니다. 기존 병합 기록을 제거하려고 태그나 루트 핀을 변경하지 않습니다.
 2. 변경된 앱부터 루트까지 작업 트리가 안전한지 확인한 뒤 `git fetch origin --prune`, `git switch dev`, `git pull --ff-only origin dev`를 수행합니다. `dev == origin/dev`, main의 dev 포함 여부, 원격 main/dev의 앞섬·뒤처짐 수와 파일 차이를 모두 검증합니다. 로컬 main을 최신화할 때도 ff-only로 처리하며 분기 이력을 강제로 덮어쓰지 않습니다.
 3. 돌아온 dev의 manifest·lockfile이 설치 당시 상태와 다르면 각 앱에서 `npm ci`로 node_modules를 갱신합니다. 이것은 피처 커밋 전의 `npm i → npm ci` 검증을 대체하지 않습니다. 설정 예제·개발 서비스 요구 변경을 확인하되 기존 `.env`나 데이터를 덮어쓰지 않습니다.
-4. 루트 릴리즈의 포인터는 앱 main SHA로 유지합니다. 최신 자식 dev checkout의 SHA가 다르면 루트에서 gitlink 변경으로 표시될 수 있으므로, 배포 포인터와 개발 checkout의 차이로 기록합니다. 이를 지우려고 자식을 과거 핀으로 되돌리거나 dev SHA를 main 릴리즈 포인터에 자동 반영하지 않습니다. 정확한 배포 트리 재현은 별도의 깨끗한 checkout에서 수행합니다.
-5. 각 저장소의 현재 브랜치·HEAD·추적 상태·남은 변경, 앱 설치 상태, PR·Release URL, 서비스 배포 결과를 보고합니다. dev 복귀나 동기화가 차단되면 “개발 환경 복원 완료”로 표시하지 않습니다. 기존 피처 브랜치는 별도 요청이나 명확한 정리 정책 없이 삭제하지 않습니다.
+4. 일반 개발의 루트 서브모듈 포인터 기본값은 각 자식의 검증된 `origin/dev` 커밋입니다. 관련 자식을 fetch하고 깨끗한 dev checkout·원격 도달 가능성을 확인한 뒤 정확한 SHA를 루트 피처에 기록하며, 자식 커밋·푸시를 먼저 완료합니다. gitlink는 항상 고정 SHA이므로 `.gitmodules` 변경이나 `submodule update --remote`로 dev를 자동 추적하게 만들지 않습니다. 명시적인 배포·릴리즈 조합은 검증한 main/릴리즈 SHA를 사용하며 기존 태그·릴리즈 트리를 변경하지 않습니다. 릴리즈 후 개발 포인터 복귀가 필요하면 별도 정상 루트 피처 커밋으로 반영하고 미커밋 자식 변경을 섞지 않습니다. 이번 작업에 포인터 복귀 커밋이 포함되지 않았다면 그 차이를 보고합니다.
+5. 각 저장소의 현재 브랜치·HEAD·추적 상태·남은 변경, 앱 설치 상태, PR·Release URL, 서비스 배포 결과를 보고합니다. dev 복귀나 동기화가 차단되면 “개발 환경 복원 완료”로 표시하지 않습니다. 병합된 피처 브랜치는 아래 정리 절차를 적용합니다.
 
 완료 조건은 **검증된 코드 + 요청 범위의 실제 병합 + GitHub Release 확인 + 로컬 최신 dev 복귀**입니다. 실제 환경 배포까지 확인해야 `deployed`로 표시하고, Release 생성까지만 완료되었으면 `released`로 기록합니다.
+
+## 7. 피처 PR 병합 후 브랜치 정리
+
+PR이 실제 `MERGED`인지와 대상 저장소·head 브랜치·병합 당시 head SHA를 `gh`로 확인합니다. 같은 head를 사용하는 다른 열린 PR이 없고 로컬·원격 tip에 병합 이후 추가 작업이 없으며, 대상 브랜치에 모든 작업이 통합됐는지 확인합니다. Squash 병합은 원래 SHA의 조상 여부만으로 판단하지 않고 PR 변경과 통합 결과의 동등성도 확인합니다.
+
+로컬을 최신 dev로 전환한 뒤 `git worktree list`로 다른 checkout에서 사용 중이지 않은 피처만 `git branch -d`로 삭제합니다. 검증된 origin 피처 ref는 `gh`로 삭제하고 fetch/prune한 뒤 재확인합니다. GitHub가 이미 삭제했다면 재삭제하지 않습니다. `-d`가 거절하거나 안전한 삭제를 증명하지 못하면 `-D`로 우회하지 않고 사유를 기록합니다. main/dev, 미병합·무관한 작업 브랜치와 추가 커밋은 보존합니다. 새로 커밋·푸시한 피처는 해당 PR의 병합 전까지 유지합니다.
