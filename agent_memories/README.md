@@ -20,7 +20,7 @@ Read the root [AGENTS.md](../AGENTS.md) and this index at the beginning of each 
 - [03 — Submodule README reorganization](03-readme-reorganization/change.md) — resolved locally; aligned onboarding structure, app-owned reference documents, and corrected source-backed auth/configuration instructions.
 
 - [04 — Backend CI and WireGuard deployment](04-backend-ci-deployment/change.md) — resolved/deployed; both app v1.0.0 Releases and root composition release published, fifth backend rollout verified Healthy, scoped CI keys and isolated server releases configured, root/backend dev synchronization complete.
-- [05 — Cloudflare Pages build follow-up](05-cloudflare-build-follow-up/findings.md) — blocked/deferred by user; hosted frontend build failed without accessible error logs, and frontend sync PR #50 remains open.
+- [05 — Cloudflare Pages build follow-up](05-cloudflare-build-follow-up/findings.md) — resolved/deployed; Pages Node mismatch corrected without source changes, production HTTP smoke passed, PR #50 merged, and frontend dev synchronized.
 
 Add new topics as `06-descriptive-topic/`, `07-another-topic/`, and so on. Classify note content as an investigation, plan, decision, or handoff; track `draft`, `active`, `blocked`, `resolved`, or `superseded` explicitly. A proposed plan is not an accepted architectural decision.
 

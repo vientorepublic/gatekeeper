@@ -70,9 +70,13 @@ upgrade or public visibility for root rulesets/branch protection; merge enforcem
 is not active. See [CI/deployment setup](../../docs/backend-ci-deployment.md) and
 [implementation evidence](../04-backend-ci-deployment/change.md).
 
-Frontend Pages build is separately failed/deferred, with sync PR #50 open; see
-[Cloudflare follow-up](../05-cloudflare-build-follow-up/findings.md). A published source
-release and local adapter build do not establish successful hosted frontend deployment.
+Frontend v1.0.0 is deployed to Cloudflare Pages at `gateway.viento.me`. Pages v3
+required an explicit Node 24.22.1 selector because its default Node 22.16.0 failed
+SvelteKit 3's engine requirement. Build tool selectors are encrypted project bindings
+for production and preview; plain dashboard variables were superseded by the
+repository Wrangler configuration. Production deployment and HTTP smoke succeeded,
+then PR #50 synchronized main into dev. See [Cloudflare follow-up](../05-cloudflare-build-follow-up/findings.md)
+for exact deployment and synchronization evidence and validation limits.
 
 ## Maintenance
 
