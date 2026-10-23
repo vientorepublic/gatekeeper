@@ -201,6 +201,17 @@ strict host verification and a command-scoped HTTPS-to-SSH URL rewrite for submo
 fetch. Remove credential files on success/error and unset key variables before Docker.
 No durable credential helper, URL, or private key is written to the server checkout.
 
+Fetch credential [PR #6](https://github.com/vientorepublic/gatekeeper/pull/6) and
+[promotion #7](https://github.com/vientorepublic/gatekeeper/pull/7) passed hosted checks
+and merged; main became `edc583e37ac71f8fbe40072511e5b58ddc9f4887`.
+[Third deployment](https://github.com/vientorepublic/gatekeeper/actions/runs/39924197608)
+authenticated the root fetch and updated origin/main, then failed because Git's default
+on-demand recursive fetch also attempted both private child repos with the root-only
+token. No merge/build/container replacement occurred. Fix root fetch with explicit
+`--recurse-submodules=no` and root merge with `submodule.recurse=false`; only the later
+backend path-specific submodule update uses its scoped SSH key. This preserves credential
+boundaries and does not require frontend fetch rights on the server.
+
 Workflow/script implementation and local logic checks are complete. AC-2 remote
 enforcement and actual Actions/WireGuard/SSH/Compose execution remain unverified.
 No secrets were read or changed; no remote configuration was mutated. No commit, push,
