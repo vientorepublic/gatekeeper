@@ -25,7 +25,7 @@ The user explicitly requested GitHub operations through gh CLI, new feature work
 - Use gh for GitHub metadata/PRs/issues/checks/Releases, git for local history and transport. Use explicit repository selection, including explicit repo endpoints for gh api.
 - Feature PRs target dev. Deployment promotes verified dev to main through an ancestry-preserving PR merge, then publishes an app-version Release targeting the exact verified main SHA. Required checks/reviews cannot be bypassed.
 - Whole-project deployment includes the root composition Release after child Releases and final root main gitlinks are verified. Root has no npm package/version. App-scoped deployment does not require unrelated app or root Releases.
-- After release publication, synchronize main back to dev through a PR when necessary, then fetch/switch/fast-forward local dev and refresh changed app installations. Root release pins remain main SHAs; local child dev SHAs can intentionally differ and must be reported rather than silently staged.
+- After release publication, classify remote ancestry and tree differences. Prefer a protection-compliant, non-forced dev ref fast-forward to verified main when dev is its ancestor; use a main-to-dev PR only when required by protection or divergence. If main is already included, do not repeat synchronization to clear an ahead badge. Follow AGENTS.md and the release runbook for exact checks. Root release pins remain main SHAs; local child dev SHAs can intentionally differ and must be reported rather than silently staged.
 - Creating these instructions did not perform deployment, branch creation, PR merges, or release publication. Actual remote branch/protection settings must be checked at execution time.
 
 ## Handling the mismatch safely
@@ -51,7 +51,7 @@ External library release, only if needed and separately authorized
   -> final app main SHA verification -> app GitHub Release
   -> root gitlink/memory feature commit/push with --recurse-submodules=check
   -> root feature-to-dev PR -> dev-to-main deployment PR -> root composition Release
-  -> main-to-dev synchronization PRs -> local updated dev + dependency refresh
+  -> ancestry-based main-to-dev synchronization -> local updated dev + dependency refresh
 ```
 
 Today FlowAuth is an external npm dependency, so its package version is the shared dependency reference. A new backend/frontend version does not publish FlowAuth. A root commit cannot include uncommitted child files; it records only the child's HEAD.
@@ -65,3 +65,13 @@ Avoid pointer-only churn caused by switching child branches. Inspect staged gitl
 `submodule_util.sh update` invokes `git submodule update --init --recursive --remote`. Its message says reset, but its actual behavior is a remote-tracking submodule update; it is not a safe cleanup command.
 
 `submodule_util.sh branch <name>` fetches, checks out, pulls each available branch, and stages application paths at root. Inspect its branch handling and resulting diffs before use. Never invoke it just to clear a status warning.
+
+## History-only synchronization commits
+
+Verified 2026-10-23: backend dev `1e66b0c` (PR #49) and frontend dev `f9460c6`
+(PR #50) are each one commit ahead of main with identical trees. Each extra commit
+is the main-to-dev PR merge itself, not an unpublished application change. Root dev
+is six commits ahead at `c8098ec`, including real operations/memory changes; it must
+not be classified as history-only. See [the investigation](../06-git-sync-guidelines/findings.md).
+The updated lifecycle avoids creating the reverse merge when a permitted ref
+fast-forward is sufficient. Existing published ancestry is retained.
