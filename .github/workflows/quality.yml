@@ -5,7 +5,9 @@ on:
   merge_group:
   workflow_call:
     secrets:
-      SUBMODULE_READ_TOKEN:
+      BACKEND_READ_KEY:
+        required: true
+      FRONTEND_READ_KEY:
         required: true
 
 permissions:
@@ -19,7 +21,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [backend, frontend]
+        include:
+          - app: backend
+            read_key: BACKEND_READ_KEY
+          - app: frontend
+            read_key: FRONTEND_READ_KEY
     defaults:
       run:
         working-directory: gatekeeper-${{ matrix.app }}
@@ -27,7 +33,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.SUBMODULE_READ_TOKEN }}
+          persist-credentials: false
+      - name: Resolve pinned app revision
+        id: revision
+        working-directory: .
+        run: echo "sha=$(git rev-parse HEAD:gatekeeper-${{ matrix.app }})" >> "$GITHUB_OUTPUT"
+      - name: Checkout private app
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/gatekeeper-${{ matrix.app }}
+          ref: ${{ steps.revision.outputs.sha }}
+          path: gatekeeper-${{ matrix.app }}
+          ssh-key: ${{ secrets[matrix.read_key] }}
           submodules: recursive
           persist-credentials: false
       - uses: actions/setup-node@v4

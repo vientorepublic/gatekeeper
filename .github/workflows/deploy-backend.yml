@@ -15,7 +15,8 @@ jobs:
   quality:
     uses: ./.github/workflows/quality.yml
     secrets:
-      SUBMODULE_READ_TOKEN: ${{ secrets.SUBMODULE_READ_TOKEN }}
+      BACKEND_READ_KEY: ${{ secrets.BACKEND_READ_KEY }}
+      FRONTEND_READ_KEY: ${{ secrets.FRONTEND_READ_KEY }}
 
   deploy:
     name: Deploy backend through WireGuard

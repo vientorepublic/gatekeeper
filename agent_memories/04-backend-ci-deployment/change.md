@@ -138,6 +138,38 @@ Root PRs, deployment observation, composition Release and return-to-dev synchron
 are still in progress. The following initial handoff paragraph describes the earlier
 local-only state and is retained as historical evidence.
 
+Publication continuation: root [PR #2](https://github.com/vientorepublic/gatekeeper/pull/2)
+was created from signed `54598e17af5dd93ef7ea19a8e78ef1e0f9dd45bc`. Initial
+[CI run](https://github.com/vientorepublic/gatekeeper/actions/runs/39920769508) failed
+app checkout with `Input required and not supplied: token`; deployment-script checks
+passed and the explicit quality gate failed correctly. The user requested native CI
+read access and backend-first deployment. To avoid a user-managed PAT, root checkout
+now uses its normal GITHUB_TOKEN and each exact app pin is checked out separately
+with an app-specific read-only SSH deploy key. Registered via gh:
+
+- Backend `gatekeeper-root-ci`, key ID `167399462`, `read_only=true`; root secret `BACKEND_READ_KEY`.
+- Frontend `gatekeeper-root-ci`, key ID `167399468`, `read_only=true`; root secret `FRONTEND_READ_KEY`.
+
+Private key files were temporary and deleted after setting the secrets; no key values
+were logged or versioned. This supersedes SUBMODULE_READ_TOKEN requirements above.
+Actionlint and the language scan passed for the updated workflows.
+
+Backend [main-to-dev PR #49](https://github.com/vientorepublic/gatekeeper-backend/pull/49)
+merged as `1e66b0c55c58a656c94ad3a5697e55252712f075`; local backend now matches
+origin/dev, with an unchanged source/package tree from released main. Root still pins
+the release main SHA, intentionally different from the local dev checkout.
+
+Frontend [sync PR #50](https://github.com/vientorepublic/gatekeeper-frontend/pull/50)
+is open. Cloudflare Pages reported a build failure on released frontend main, deployment
+`36de4405-0620-4fa6-a500-2bed2beb9ee1`. GitHub check output supplies no actual build
+error. Wrangler is not authenticated; no connected Cloudflare plugin was found, and
+the fallback browser did not reach usable logs. The user explicitly prioritized
+backend deployment and deferred Cloudflare work. Do not infer a code defect from this
+failure alone or bypass it on the sync PR.
+
+Local direct SSH to the tunnel host timed out; production access must be verified from
+the Actions runner using the configured WireGuard and server SSH secrets.
+
 Workflow/script implementation and local logic checks are complete. AC-2 remote
 enforcement and actual Actions/WireGuard/SSH/Compose execution remain unverified.
 No secrets were read or changed; no remote configuration was mutated. No commit, push,

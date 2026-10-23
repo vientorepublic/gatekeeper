@@ -33,11 +33,14 @@
   `10.20.0.1 ssh-ed25519 <server-host-public-key>` 형식입니다. 서버의
   `/etc/ssh/ssh_host_ed25519_key.pub`를 기준으로 준비합니다. 실행 중 얻은 미검증 키로
   대체하지 않습니다. host key 변경 시 이 변수도 검증 후 갱신합니다.
-- Secret `SUBMODULE_READ_TOKEN`: 비공개 루트·백엔드·프론트엔드 저장소에만
-  Contents read 권한을 부여한 fine-grained PAT. 기본 `GITHUB_TOKEN`은 다른 비공개
-  저장소를 읽을 수 없으므로 추가로 필요합니다. 배포용 SSH 키와 분리합니다.
+- Secrets `BACKEND_READ_KEY`, `FRONTEND_READ_KEY`: 각 앱 저장소의 `gatekeeper-root-ci`
+  읽기 전용 deploy key에 대응하는 SSH 개인키입니다. 루트 checkout은 기본
+  `GITHUB_TOKEN`의 `contents: read`를 사용하고, 각 앱 checkout에는 해당 앱 전용 키만
+  전달합니다. 기본 토큰의 저장소 범위를 확장하거나 운영 서버 키를 재사용하지 않습니다.
+  초기 설정은 gh로 완료했습니다. 키 교체 시 해당 앱 deploy key와 루트 secret을 함께
+  갱신해야 합니다. PAT는 필요하지 않습니다.
 
-PR 작업에는 WireGuard·SSH 배포 비밀값을 전달하지 않습니다. 읽기 토큰은 checkout에만
+PR 작업에는 WireGuard·SSH 배포 비밀값을 전달하지 않습니다. 읽기 키는 checkout에만
 사용하고 Git 설정에 저장하지 않습니다. fork PR·Dependabot PR 등 비밀값을 받지 못하는
 실행은 비공개 서브모듈을 가져올 수 없어 실패합니다. 이 경우 신뢰한 코드를 내부
 브랜치로 가져와 검사하며, `pull_request_target`으로 비밀값을 노출하는 방식은 사용하지 않습니다.

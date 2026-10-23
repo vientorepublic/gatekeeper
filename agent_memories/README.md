@@ -19,7 +19,7 @@ Read the root [AGENTS.md](../AGENTS.md) and this index at the beginning of each 
 
 - [03 — Submodule README reorganization](03-readme-reorganization/change.md) — resolved locally; aligned onboarding structure, app-owned reference documents, and corrected source-backed auth/configuration instructions.
 
-- [04 — Backend CI and WireGuard deployment](04-backend-ci-deployment/change.md) — active; both app v1.0.0 Releases published, root pointer/CI publication and backend rollout in progress; read token still required and current GitHub plan rejects branch protection.
+- [04 — Backend CI and WireGuard deployment](04-backend-ci-deployment/change.md) — active; both app v1.0.0 Releases published, root PR #2 and backend rollout in progress; app-specific read-only CI keys configured, branch protection unavailable on current plan, Cloudflare follow-up deferred.
 
 Add new topics as `05-descriptive-topic/`, `06-another-topic/`, and so on. Classify note content as an investigation, plan, decision, or handoff; track `draft`, `active`, `blocked`, `resolved`, or `superseded` explicitly. A proposed plan is not an accepted architectural decision.
 
