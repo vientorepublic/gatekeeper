@@ -212,6 +212,23 @@ token. No merge/build/container replacement occurred. Fix root fetch with explic
 backend path-specific submodule update uses its scoped SSH key. This preserves credential
 boundaries and does not require frontend fetch rights on the server.
 
+Recursion fix [PR #8](https://github.com/vientorepublic/gatekeeper/pull/8) and
+[promotion #9](https://github.com/vientorepublic/gatekeeper/pull/9) passed CI and merged;
+main became `14118387d73f4969deb5fbb6cfc6adadd0f97f64`.
+[Fourth deployment](https://github.com/vientorepublic/gatekeeper/actions/runs/39925008076)
+fetched root successfully but fast-forward merge refused operator-owned local gitlink
+changes for both apps. Preserve them rather than resetting/stashing/committing server work.
+
+Deployment now creates a separate local clone in `~/.gatekeeper-releases/<sha>.<suffix>`,
+checks out the exact fetched root SHA, and initializes only the pinned backend with its
+temporary read key. The primary clone's HEAD/index/worktree remain untouched except
+fetch metadata. Runtime env files are symlinked from the existing project. Compose uses
+the existing backend container's project label; invalid/missing labels on an existing
+container are rejected, and only absent containers use the `gatekeeper` default.
+Keep release directories for inspection; do not invent an automatic data retention purge.
+Regression coverage includes a real local Git clone fixture proving a fetched commit
+can be checked out while preserving the primary staged gitlink bytes and HEAD.
+
 Workflow/script implementation and local logic checks are complete. AC-2 remote
 enforcement and actual Actions/WireGuard/SSH/Compose execution remain unverified.
 No secrets were read or changed; no remote configuration was mutated. No commit, push,

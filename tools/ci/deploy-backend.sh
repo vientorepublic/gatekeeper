@@ -58,8 +58,13 @@ if [[ "$(git rev-parse FETCH_HEAD)" != "$deploy_sha" ]]; then
   echo 'A newer main revision exists; skipping this superseded deployment.'
   exit 0
 fi
-git -c submodule.recurse=false merge --ff-only "$deploy_sha"
-test "$(git rev-parse HEAD)" = "$deploy_sha"
+# A separate checkout preserves operator-owned gitlink changes in the primary clone.
+umask 077
+mkdir -p "$HOME/.gatekeeper-releases"
+release_dir=$(mktemp -d "$HOME/.gatekeeper-releases/$deploy_sha.XXXXXX")
+git clone --no-hardlinks --no-checkout "$project_dir" "$release_dir"
+git -c submodule.recurse=false -C "$release_dir" checkout --detach "$deploy_sha"
+test "$(git -C "$release_dir" rev-parse HEAD)" = "$deploy_sha"
 if [[ -n "${GATEKEEPER_BACKEND_READ_KEY:-}" ]]; then
   : "${GATEKEEPER_GITHUB_HOST_KEYS:?Verified GitHub SSH host keys are required}"
   umask 077
@@ -70,19 +75,39 @@ if [[ -n "${GATEKEEPER_BACKEND_READ_KEY:-}" ]]; then
   unset GATEKEEPER_BACKEND_READ_KEY GATEKEEPER_GITHUB_HOST_KEYS
   git -c url.ssh://git@github.com/.insteadOf=https://github.com/ \
     -c "core.sshCommand=ssh -i $credential_dir/backend-key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$credential_dir/known_hosts" \
+    -C "$release_dir" \
     submodule update --init --recursive -- gatekeeper-backend
   rm -rf "$credential_dir"
   trap - EXIT
 else
-  git submodule update --init --recursive -- gatekeeper-backend
+  git -C "$release_dir" submodule update --init --recursive -- gatekeeper-backend
 fi
-expected_backend=$(git rev-parse HEAD:gatekeeper-backend)
-test "$(git -C gatekeeper-backend rev-parse HEAD)" = "$expected_backend"
+expected_backend=$(git -C "$release_dir" rev-parse HEAD:gatekeeper-backend)
+test "$(git -C "$release_dir/gatekeeper-backend" rev-parse HEAD)" = "$expected_backend"
+
+for app in gatekeeper-backend gatekeeper-frontend; do
+  mkdir -p "$release_dir/$app"
+  if [[ -f "$project_dir/$app/.env" ]]; then
+    ln -s "$project_dir/$app/.env" "$release_dir/$app/.env"
+  fi
+done
+if [[ -f "$project_dir/.env" ]]; then
+  ln -s "$project_dir/.env" "$release_dir/.env"
+fi
+if project_name=$(docker inspect --type container --format '{{ index .Config.Labels "com.docker.compose.project" }}' gatekeeper-backend 2>/dev/null); then
+  if [[ ! "$project_name" =~ ^[a-z0-9][a-z0-9_-]*$ ]]; then
+    echo 'The existing backend container has no valid Compose project label.' >&2
+    exit 1
+  fi
+else
+  project_name=gatekeeper
+fi
+compose=(docker compose --project-name "$project_name" -f "$release_dir/docker-compose.yml")
 
 # Existing database and Redis services are prerequisites, not rollout targets.
-docker compose -f docker-compose.yml config --quiet
-docker compose -f docker-compose.yml build backend
-docker compose -f docker-compose.yml up --detach --no-deps --wait --wait-timeout 120 backend
+"${compose[@]}" config --quiet
+"${compose[@]}" build backend
+"${compose[@]}" up --detach --no-deps --wait --wait-timeout 120 backend
 curl --fail --silent --show-error --retry 5 --retry-connrefused \
   --retry-delay 2 --connect-timeout 5 --max-time 10 http://127.0.0.1:10001/health > /dev/null
 printf 'Deployed meta %s, backend %s\n' "$deploy_sha" "$expected_backend"
