@@ -2,7 +2,7 @@
 
 - Kind: plan / implementation handoff
 - Status: resolved
-- Stage: verified-local
+- Stage: published
 - Outcome: completed
 - Created / last verified: 2026-10-23
 - Type: refactor (documentation only)
@@ -12,6 +12,9 @@
 - Related: [architecture](../repo/project-architecture.md), [feature workflow](../../docs/development-workflow.md)
 
 ## Objective and boundaries
+
+Publication update: both app documentation changes shipped with their v1.0.0 Releases;
+the original local-only baseline below is historical. See [final publication evidence](../04-backend-ci-deployment/change.md).
 
 Reorganize both submodule READMEs as onboarding/navigation entry points. Preserve useful configuration, routing, API, deployment, and benchmark information in owning app docs. Correct claims against current local source; retain unrelated dependency and implementation work. No runtime, environment example, package version, lockfile, or deployment changes are included.
 

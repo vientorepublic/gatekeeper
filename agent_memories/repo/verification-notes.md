@@ -63,3 +63,19 @@ See [the dependency refresh findings](../01-dependency-security-refresh/findings
 ## Guideline remediation verification
 
 See [the guideline audit](../02-guideline-compliance-audit/findings.md) for source-wide inspection, 71 backend unit / 47 integration / 19 frontend tests, both adapter builds, clean-install/audit checks, isolated Redis and synthetic browser verification. Run `node tools/check-agent-guidelines.mjs` from the root for comment/test-title checks; `--inventory` lists covered files. The language scan is an aid, not a complete English-language proof.
+
+## Published 1.0.0 and backend deployment
+
+Both app final release gates were rerun with Node 24.22.1/npm 11.13.0 and normal
+lifecycle scripts: npm i, stable-lock npm ci, all required app checks, 137 combined
+tests, both adapters, full/production audits reporting zero vulnerabilities. Root
+hosted Ubuntu/Node 24 checks also passed on every promotion's exact head. Final hashes:
+
+- Backend: `aac45dd2d5321dc05e8670d0b3cc55421fe12780eabaac684ff814437deed042`.
+- Frontend: `95ed75a18e403730e5af34971bd2c2ebc25ef259ec8d765b278ea3226f79546d`.
+
+The successful main deployment additionally verified fourteen script regression tests,
+private fetch scopes, isolated release checkout, Docker image build, backend container
+Healthy, host HTTP probe, and tunnel/credential cleanup. See [topic 04](../04-backend-ci-deployment/change.md)
+for immutable SHAs/run/release URLs and limitations. Production OAuth/upstream end-to-
+end behavior and frontend hosted Pages success are not established by these checks.

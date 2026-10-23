@@ -1,7 +1,7 @@
 # Dependency and Security Refresh
 
 - Kind: investigation / implementation handoff
-- Status: resolved for local remediation; publication remains a separate handoff
+- Status: resolved; subsequently published in app v1.0.0 Releases
 - Created: 2026-10-23
 - Last verified: 2026-10-23
 - Scope: both app manifests/lockfiles, Renovate configuration, framework migration compatibility
@@ -9,6 +9,12 @@
 - Branch: `codex/dependency-security-refresh` in root and both children; no commits, pushes, merges, tags, or gitlink changes performed.
 
 ## Sources and scope
+
+Publication update: the initial 0.0.2 proposal and local-only status below are historical.
+Both apps shipped as 1.0.0 after the existing major bump and final install/check gates;
+backend production deployment succeeded. See [publication evidence](../04-backend-ci-deployment/change.md)
+for final hashes/SHAs and [frontend follow-up](../05-cloudflare-build-follow-up/findings.md)
+for the separately deferred Pages failure. Earlier check results remain dated evidence.
 
 Read the bodies of all 10 open Renovate PRs in each repository and both Dependency Dashboard issues through `gh pr list` / `gh issue list` with explicit `--repo`, JSON output, and a limit of 100. Each repository returned one issue, its open dashboard. Dashboard rate-limited updates were considered along with existing PRs. GitHub objects were read only.
 
