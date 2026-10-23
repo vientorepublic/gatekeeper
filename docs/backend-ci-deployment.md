@@ -9,8 +9,9 @@
   린트, 타입 검사, 빌드, 단위 테스트를 실행합니다. 백엔드 통합 테스트와 프론트엔드
   Cloudflare/Node 빌드도 포함합니다. 백엔드 린트가 자동 수정한 경우에도 실패합니다.
 - main push: 같은 품질 검사를 다시 통과한 후 WireGuard를 연결합니다.
-  SSH 키로 `root@10.20.0.1`에 접속하여 `/root/Gatekeeper`에서 해당 main SHA를
-  fast-forward하고, 그 커밋의 백엔드 gitlink를 체크아웃합니다.
+  SSH 키로 `root@10.20.0.1`에 접속하여 프로젝트에서 해당 main SHA를 가져오고,
+  `~/.gatekeeper-releases/`의 별도 checkout에 그 SHA와 백엔드 gitlink를 재현합니다.
+  기존 프로젝트의 staged gitlink와 작업 파일은 병합·초기화하지 않습니다.
 - `docker compose build backend` 성공 후 `up --detach --no-deps --wait`로 백엔드만
   교체하고 호스트의 `http://127.0.0.1:10001/health` 응답을 확인합니다.
   DB·Redis·프론트엔드 재생성이나 볼륨 삭제는 하지 않습니다.
@@ -81,7 +82,12 @@ PR에서 한 번 실행한 후, 루트 저장소 **Settings → Rules → Rulese
   명령에만 임시 credential helper로 사용하고 Git 설정에 저장하지 않습니다. 백엔드 키는
   임시 파일로 사용 후 실패 시에도 제거합니다. GitHub SSH host key는 runner가 HTTPS API로
   검증해 전달하며 host 검증을 유지합니다. 서버에서 github.com에 연결할 수 있어야 합니다.
-  서버의 로컬 수정이나 분기된 이력은 자동 초기화하지 않고 배포를 실패시킵니다.
+  기존 checkout의 gitlink 변경은 별도 릴리즈 checkout으로 보존합니다. 그 외 메타/백엔드
+  소스 수정은 자동 초기화하지 않고 배포를 실패시킵니다. 실제 서버 경로는 `/root/gatekeeper`입니다.
+- 릴리즈 checkout은 기존 앱/루트 `.env`를 symlink로 참조합니다. 기존 백엔드 컨테이너의
+  Compose project label을 재사용해 같은 서비스를 교체하며, label 없는 수동 컨테이너는
+  임의로 인수하지 않습니다. 첫 배포에서 컨테이너가 없다면 project 이름은 `gatekeeper`입니다.
+  릴리즈 디렉터리는 운영 확인을 위해 보관하며 자동 삭제 정책은 적용하지 않습니다.
 - 서버의 `.gitmodules`와 submodule 등록을 먼저 확인합니다. 로컬 개발 환경의 등록 이름
   불일치는 이번 작업에서 수정하지 않았습니다.
 - 기존 Compose의 두 앱 `.env`, `gateway_shared_network`, 정상 DB·Redis가 필요합니다.
