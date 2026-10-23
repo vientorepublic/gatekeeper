@@ -35,8 +35,13 @@ git clone --recurse-submodules <root-repo-url>
 - 전체 아키텍처/역할/운영 관점 설명: 이 문서
 - 백엔드 상세 설정/엔드포인트/관측/테스트: `gatekeeper-backend/README.md`
 - 프론트엔드 상세 설정/개발/빌드 검증/Cloudflare Pages 배포: `gatekeeper-frontend/README.md`
+- 공통 에이전트 작업 지침: [AGENTS.md](AGENTS.md)
+- 에이전트 공유 기억과 구조 분석: [agent_memories/README.md](agent_memories/README.md)
 
 ## 배포
+
+백엔드는 루트 main push 시 WireGuard와 SSH로 자동 배포하도록 구성합니다.
+시크릿·서버 준비와 PR 필수 검사 설정은 [백엔드 CI·배포 문서](docs/backend-ci-deployment.md)를 따르세요.
 
 프론트엔드는 SvelteKit Cloudflare 어댑터를 사용해 Cloudflare Pages에 배포합니다.
 Pages 프로젝트의 Root directory, Build command, Output directory와 환경 변수는
@@ -45,6 +50,24 @@ Pages 프로젝트의 Root directory, Build command, Output directory와 환경 
 
 ## 개발 워크플로우
 
-1. 각 서브모듈에서 기능 개발 및 커밋 수행
-2. 루트 저장소에서 서브모듈 포인터 업데이트 커밋
-3. 루트 기준으로 배포/릴리즈 버전 관리
+기능 추가·수정·삭제는 [상세 개발 워크플로우](docs/development-workflow.md)를 따릅니다.
+여러 모듈·저장소 또는 공개 계약·인증·데이터에 영향을 주는 작업은
+[작업 기록 템플릿](agent_memories/templates/change-template.md)을 사용합니다.
+
+1. `AGENTS.md`와 공유 기억을 읽고 기존 변경을 확인한 뒤 현재/목표 동작·범위·수용 기준 정의
+2. 사용처와 API·권한·데이터·설정 계약을 조사하고 유형별 구현·전환 순서 결정
+3. 제공자와 소비자를 함께 수정하고 테스트·문서·불필요한 참조 정리
+4. 변경한 앱의 버전·`npm i`·`npm ci`·관련 검증을 완료하고 수용 기준별 근거 기록
+5. 로컬 검증 완료와 공개·배포 상태를 구분해 보고하고 공유 기억 갱신
+6. 커밋·푸시 작업 시 자식 저장소를 먼저 공개하고 원격 SHA 확인 후 루트 포인터를 마지막에 반영
+
+GitHub 관련 작업은 `gh` CLI를 사용합니다. 새 작업은 최신 `dev`에서 `feat/<topic>`을
+생성하고 `feat → dev → main` PR 순서로 병합합니다. 배포 요청은 버전·lockfile·검증,
+커밋·푸시·병합과 최종 main SHA에 대한 GitHub Release 생성까지 포함합니다.
+완료 후 `main → dev` 동기화와 로컬 최신 dev 복귀·의존성 갱신을 수행합니다.
+일반 개발은 dev 통합까지만 진행할 수 있습니다. 상세 범위와 앱·루트 처리 순서는
+[GitHub·브랜치·릴리즈 절차](docs/github-release-workflow.md)를 따르세요.
+
+앱 버전은 각 앱의 `package.json`에서 독립적으로 관리합니다. 루트는 배포 조합을
+정확한 커밋 포인터로 기록하며 별도의 Node.js 패키지 버전은 없습니다.
+상세 버전 기준과 lockfile·포인터 검증 절차는 `AGENTS.md`를 따르세요.
