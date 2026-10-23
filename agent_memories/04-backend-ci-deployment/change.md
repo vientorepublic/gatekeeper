@@ -1,9 +1,9 @@
 # Backend CI and WireGuard Deployment
 
 - Kind: implementation handoff
-- Status: active
-- Stage: verifying
-- Outcome: pending
+- Status: resolved
+- Stage: deployed
+- Outcome: completed for backend; frontend hosting deferred by user
 - Created / last verified: 2026-10-23
 - Type: addition
 - Scope: both existing app changesets, dependency-first PR/release publication, root workflows/pins and backend deployment
@@ -239,3 +239,43 @@ root pins through the required dependency-first flow, enable a plan supporting p
 branch protection (or explicitly change visibility), then require `PR quality gate`
 for main/dev and verify a failing PR cannot merge. Finally verify an authorized main
 deployment and record its immutable root/backend SHAs and production health separately.
+
+## Final backend deployment and release verification
+
+Snapshot fix [PR #10](https://github.com/vientorepublic/gatekeeper/pull/10) and
+[main promotion #11](https://github.com/vientorepublic/gatekeeper/pull/11) passed all
+hosted checks and merged. Final deployed root main is
+`fec44ad1c060ba810167ad5ddae432e2e98fe20b`.
+
+- [Successful fifth deployment](https://github.com/vientorepublic/gatekeeper/actions/runs/39926552324):
+  all quality jobs and deployment job succeeded. Logs confirm image Built, backend
+  Recreated/Started, Healthy at 2026-10-23 17:46:40 JST, and successful host HTTP probe
+  followed by `Deployed meta fec44ad1c060ba810167ad5ddae432e2e98fe20b, backend 7c6fccede657ab7cdac25725a5726e829a6e199c`.
+  WireGuard deletion and runner credential cleanup succeeded.
+- Server primary checkout: `/root/gatekeeper`; deployed release checkout:
+  `/root/.gatekeeper-releases/fec44ad1c060ba810167ad5ddae432e2e98fe20b.NgbChn`.
+  Primary staged gitlinks were preserved; backend was initialized at the exact release
+  SHA in the isolated checkout. No database/Redis/frontend service recreation occurred.
+- [Composition Release release-20261023.1](https://github.com/vientorepublic/gatekeeper/releases/tag/release-20261023.1)
+  is published, non-draft/non-prerelease; its immutable lightweight tag resolves to
+  that exact deployed root SHA. `git ls-tree` matches backend `7c6fccede657ab7cdac25725a5726e829a6e199c`
+  and frontend `ec3586823f5d205ee9d8d7b522e077b96721239b`, both published v1.0.0 tags.
+- Root [main-to-dev PR #12](https://github.com/vientorepublic/gatekeeper/pull/12) passed
+  hosted CI and merged as `3fb85c1d294b3d0b652b3173cf378114d6835c62`. Local root returned
+  to origin/dev; deployed main is an ancestor and source trees match before this
+  documentation-only follow-up. Backend dev is `1e66b0c55c58a656c94ad3a5697e55252712f075`;
+  frontend dev is `327519f9e22ac27506bf8b3c65ba4b28d9fafa27`. Both local apps match their
+  origin/dev with clean app worktrees and unchanged verified package/lock contents,
+  so no additional installation was needed on return. Root gitlink status differences
+  are intentional child-dev checkout versus immutable app-main release pins.
+- Final deployment regression suite: 14 passing tests, including a real Git fixture;
+  actionlint/Bash/language/diff/link checks passed. All promotion checks passed at the
+  exact matched head before each merge; no admin/protection bypass or force push used.
+- The initial missing PAT blocker was resolved with scoped read-only deploy keys; no
+  user-managed PAT or production credential persistence was needed.
+
+Remaining limits: private branch-protection capability is still unavailable under the
+current GitHub plan, though this promotion checked every quality result before merge.
+Full external OAuth/upstream readiness is not established by process health. Frontend
+hosting and its blocked main-to-dev PR #50 are explicitly deferred; see
+[Cloudflare follow-up](../05-cloudflare-build-follow-up/findings.md).
