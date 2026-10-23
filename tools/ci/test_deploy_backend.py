@@ -3,6 +3,7 @@
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -23,10 +24,10 @@ args = sys.argv[1:]
 with open(os.environ["MOCK_LOG"], "a") as log:
     log.write(json.dumps([name, *args]) + "\n")
 if name == "git":
-    while args[:1] == ["-c"]:
-        args = args[2:]
-    child = args[:1] == ["-C"]
-    if child:
+    child = False
+    while args[:1] in (["-c"], ["-C"]):
+        if args[0] == "-C":
+            child = args[1].endswith("gatekeeper-backend")
         args = args[2:]
     if args[:1] == ["symbolic-ref"]:
         print(os.environ.get("MOCK_BRANCH", "main"))
@@ -43,6 +44,8 @@ if name == "git":
     elif args[:1] == ["merge"] and os.environ.get("MOCK_DIVERGED"):
         sys.exit(1)
 elif name == "docker":
+    if args[:1] == ["inspect"]:
+        print(os.environ.get("MOCK_COMPOSE_PROJECT", "gatekeeper"))
     if "build" in args and os.environ.get("MOCK_BUILD_FAIL"):
         sys.exit(1)
     if "up" in args and os.environ.get("MOCK_UP_FAIL"):
@@ -87,11 +90,15 @@ class DeploymentTests(unittest.TestCase):
     def test_success_builds_before_replacing_only_backend(self):
         result, commands = self.run_deploy()
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn(["git", "-c", "submodule.recurse=false", "merge", "--ff-only", SHA], commands)
+        checkout = next(command for command in commands if "checkout" in command)
+        self.assertEqual(checkout[-2:], ["--detach", SHA])
         self.assertTrue(all("--recurse-submodules=no" in command for command in commands if "fetch" in command))
-        self.assertIn(["git", "submodule", "update", "--init", "--recursive", "--", "gatekeeper-backend"], commands)
-        build = ["docker", "compose", "-f", "docker-compose.yml", "build", "backend"]
-        up = ["docker", "compose", "-f", "docker-compose.yml", "up", "--detach", "--no-deps", "--wait", "--wait-timeout", "120", "backend"]
+        update = next(command for command in commands if "submodule" in command)
+        self.assertEqual(update[-6:], ["submodule", "update", "--init", "--recursive", "--", "gatekeeper-backend"])
+        build = next(command for command in commands if command[0] == "docker" and "build" in command)
+        up = next(command for command in commands if command[0] == "docker" and "up" in command)
+        self.assertEqual(build[1:4], ["compose", "--project-name", "gatekeeper"])
+        self.assertEqual(up[-7:], ["up", "--detach", "--no-deps", "--wait", "--wait-timeout", "120", "backend"])
         self.assertLess(commands.index(build), commands.index(up))
         self.assertEqual(commands[-1][0], "curl")
         self.assertIn(BACKEND_SHA, result.stdout)
@@ -153,10 +160,57 @@ class DeploymentTests(unittest.TestCase):
                 self.assertNotEqual(result.returncode, 0)
                 self.assertFalse(any(command[0] == "docker" or command[1:2] == ["fetch"] for command in commands))
 
-    def test_divergent_checkout_does_not_build(self):
+    def test_operator_gitlinks_are_preserved_without_a_primary_merge(self):
         result, commands = self.run_deploy(MOCK_DIVERGED="1")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(any("merge" in command or "reset" in command for command in commands))
+
+    def test_reuses_existing_compose_project_and_refuses_unmanaged_container(self):
+        result, commands = self.run_deploy(MOCK_COMPOSE_PROJECT="existing-gateway")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(all("existing-gateway" in command for command in commands if "compose" in command))
+        result, commands = self.run_deploy(MOCK_COMPOSE_PROJECT="<no value>")
         self.assertNotEqual(result.returncode, 0)
-        self.assertFalse(any(command[0] == "docker" for command in commands))
+        self.assertFalse(any("up" in command for command in commands))
+
+    def test_real_local_clone_preserves_primary_staged_gitlinks(self):
+        real_git = shutil.which("git")
+        self.assertIsNotNone(real_git)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            primary = root / "primary"
+            primary.mkdir()
+            env = {
+                **os.environ,
+                "GIT_CONFIG_GLOBAL": os.devnull,
+                "GIT_CONFIG_NOSYSTEM": "1",
+                "GIT_AUTHOR_NAME": "Fixture",
+                "GIT_AUTHOR_EMAIL": "fixture@example.invalid",
+                "GIT_COMMITTER_NAME": "Fixture",
+                "GIT_COMMITTER_EMAIL": "fixture@example.invalid",
+            }
+
+            def git(*args, input=None):
+                return subprocess.run(
+                    [real_git, *args], cwd=primary, env=env, input=input,
+                    capture_output=True, text=True, check=True,
+                ).stdout.strip()
+
+            git("init", "--quiet", "--initial-branch=main")
+            tree = git("mktree", input="")
+            base = git("commit-tree", tree, "-m", "Base fixture")
+            target = git("commit-tree", tree, "-p", base, "-m", "Release fixture")
+            git("update-ref", "refs/heads/main", base)
+            git("update-ref", "refs/remotes/origin/main", target)
+            git("read-tree", base)
+            git("update-index", "--add", "--cacheinfo", f"160000,{base},gatekeeper-backend")
+            index = (primary / ".git/index").read_bytes()
+            release = root / "release"
+            git("clone", "--no-hardlinks", "--no-checkout", str(primary), str(release))
+            git("-c", "submodule.recurse=false", "-C", str(release), "checkout", "--detach", target)
+            self.assertEqual(git("-C", str(release), "rev-parse", "HEAD"), target)
+            self.assertEqual(git("rev-parse", "HEAD"), base)
+            self.assertEqual((primary / ".git/index").read_bytes(), index)
 
     def test_failed_build_leaves_running_service_untouched(self):
         result, commands = self.run_deploy(MOCK_BUILD_FAIL="1")
