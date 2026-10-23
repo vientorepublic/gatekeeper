@@ -23,6 +23,8 @@ args = sys.argv[1:]
 with open(os.environ["MOCK_LOG"], "a") as log:
     log.write(json.dumps([name, *args]) + "\n")
 if name == "git":
+    while args[:1] == ["-c"]:
+        args = args[2:]
     child = args[:1] == ["-C"]
     if child:
         args = args[2:]
@@ -97,6 +99,25 @@ class DeploymentTests(unittest.TestCase):
         result, commands = self.run_deploy(sha="main; unexpected-command")
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(commands, [])
+
+    def test_ephemeral_fetch_credentials_do_not_enter_logs_or_persist(self):
+        result, commands = self.run_deploy(
+            GATEKEEPER_FETCH_TOKEN="synthetic-ci-token",
+            GATEKEEPER_BACKEND_READ_KEY="synthetic-private-key",
+            GATEKEEPER_GITHUB_HOST_KEYS="github.com ssh-ed25519 synthetic-public-key",
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        output = result.stdout + result.stderr + json.dumps(commands)
+        self.assertNotIn("synthetic-ci-token", output)
+        self.assertNotIn("synthetic-private-key", output)
+        ssh_option = next(arg for command in commands for arg in command if arg.startswith("core.sshCommand="))
+        key_path = ssh_option.split(" -i ")[1].split(" ")[0]
+        self.assertFalse(Path(key_path).exists())
+
+    def test_backend_key_requires_verified_host_keys(self):
+        result, commands = self.run_deploy(GATEKEEPER_BACKEND_READ_KEY="synthetic-private-key")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse(any(command[0] == "docker" for command in commands))
 
     def test_locates_unique_checkout_with_different_case_and_parent(self):
         result, _ = self.run_deploy(MOCK_PROJECT_PATH="projects/GateKeeper")
