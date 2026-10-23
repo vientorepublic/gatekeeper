@@ -31,10 +31,16 @@ Production and preview now store `NODE_VERSION=24.22.1` and
 is the source of truth for plain variables, so initial plain-text selectors did
 not change the build toolchain. Both retry `046e0dcd-d948-48cb-b8c0-0dd0384b1caf`
 and fresh deployment `17daefc9-b34d-4eca-a43f-a2a06dc10a18` still failed with the
-old Node. The encrypted selectors corrected the next retry. Existing variable
-values were compared before/after update without printing or persisting them.
-An initial partial environment update was rejected by automatic approval review;
-the subsequent update explicitly preserved every existing entry.
+old Node. The encrypted selectors corrected the next retry. The API returns secret values as empty strings; comparing those responses did not
+prove value preservation. Re-submitting the masked values caused the first successful
+build to use the default localhost API. This was caught by inspecting the public SSR
+environment after deployment. The five existing PUBLIC_* settings were recovered
+from the previous immutable successful deployment `393c1341-36d4-42ed-a503-cd47cc784f17`
+and restored without printing their values. The public API is `https://api.viento.me`.
+Never round-trip masked secret values as writable configuration.
+An initial partial environment update was rejected by automatic approval review.
+The subsequent full-map update retained names but initially mishandled masked values;
+the public settings recovery above corrected this mistake.
 
 The successful log confirms Node 24.22.1 installation. Its initial tool detector
 still labels npm 10.9.2 before installing Node; do not infer an exact effective npm
@@ -46,7 +52,8 @@ References: [Pages build version overrides](https://developers.cloudflare.com/pa
 
 ## Deployment and synchronization evidence
 
-- Production deployment: `d5aa654b-fabe-4f89-805f-1bb40bb37b62`.
+- First build-success deployment: `d5aa654b-fabe-4f89-805f-1bb40bb37b62`; superseded
+  by the public configuration recovery deployment described below.
 - Exact deployed commit: `ec3586823f5d205ee9d8d7b522e077b96721239b`.
 - Clone, build, and deploy stages all succeeded; completed 2026-10-23 10:06:28 UTC.
 - [Immutable deployment URL](https://d5aa654b.gatekeeper-frontend.pages.dev).
@@ -67,3 +74,16 @@ Authenticated login/callback/key-management flows were not exercised with a real
 account. HTTP smoke and hosted build success do not establish those end-to-end
 flows. Root release pins remain the original immutable app main SHAs; local app dev
 checkouts intentionally differ due to ancestry synchronization.
+
+## Public configuration recovery verification
+
+The initial successful deployment was subsequently found to expose the localhost
+fallback for the API. All five previously configured PUBLIC_* values were restored
+from the public SSR environment of the prior successful immutable deployment.
+Recovery [deployment `0c2005f6-3268-4089-ba62-f3457c5f262b`](https://0c2005f6.gatekeeper-frontend.pages.dev)
+built and deployed successfully at 10:11:43 UTC against the same released main SHA.
+Production home, dashboard, and three referenced JavaScript assets returned HTTP 200
+using curl. Production SSR now declares the expected `https://api.viento.me` public
+API. An earlier Python urllib asset request returned 403; curl checks succeeded.
+This final deployment supersedes the first successful build and is the verified
+production result. No authentication or API-key mutations were performed.
