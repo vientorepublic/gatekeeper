@@ -49,16 +49,16 @@ if [[ -n "${GATEKEEPER_FETCH_TOKEN:-}" ]]; then
   # Keep the short-lived root repository token out of Git configuration and arguments.
   git -c credential.helper= \
     -c 'credential.helper=!f() { printf "%s\n" "username=x-access-token" "password=$GATEKEEPER_FETCH_TOKEN"; }; f' \
-    fetch --no-tags origin main
+    fetch --recurse-submodules=no --no-tags origin main
 else
-  git fetch --no-tags origin main
+  git fetch --recurse-submodules=no --no-tags origin main
 fi
 unset GATEKEEPER_FETCH_TOKEN
 if [[ "$(git rev-parse FETCH_HEAD)" != "$deploy_sha" ]]; then
   echo 'A newer main revision exists; skipping this superseded deployment.'
   exit 0
 fi
-git merge --ff-only "$deploy_sha"
+git -c submodule.recurse=false merge --ff-only "$deploy_sha"
 test "$(git rev-parse HEAD)" = "$deploy_sha"
 if [[ -n "${GATEKEEPER_BACKEND_READ_KEY:-}" ]]; then
   : "${GATEKEEPER_GITHUB_HOST_KEYS:?Verified GitHub SSH host keys are required}"

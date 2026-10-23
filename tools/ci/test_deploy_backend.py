@@ -87,7 +87,8 @@ class DeploymentTests(unittest.TestCase):
     def test_success_builds_before_replacing_only_backend(self):
         result, commands = self.run_deploy()
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn(["git", "merge", "--ff-only", SHA], commands)
+        self.assertIn(["git", "-c", "submodule.recurse=false", "merge", "--ff-only", SHA], commands)
+        self.assertTrue(all("--recurse-submodules=no" in command for command in commands if "fetch" in command))
         self.assertIn(["git", "submodule", "update", "--init", "--recursive", "--", "gatekeeper-backend"], commands)
         build = ["docker", "compose", "-f", "docker-compose.yml", "build", "backend"]
         up = ["docker", "compose", "-f", "docker-compose.yml", "up", "--detach", "--no-deps", "--wait", "--wait-timeout", "120", "backend"]
@@ -111,6 +112,7 @@ class DeploymentTests(unittest.TestCase):
         self.assertNotIn("synthetic-ci-token", output)
         self.assertNotIn("synthetic-private-key", output)
         ssh_option = next(arg for command in commands for arg in command if arg.startswith("core.sshCommand="))
+        self.assertTrue(all("--recurse-submodules=no" in command for command in commands if "fetch" in command))
         key_path = ssh_option.split(" -i ")[1].split(" ")[0]
         self.assertFalse(Path(key_path).exists())
 
@@ -138,7 +140,7 @@ class DeploymentTests(unittest.TestCase):
     def test_superseded_push_does_not_change_checkout_or_service(self):
         result, commands = self.run_deploy(MOCK_REMOTE_SHA="c" * 40)
         self.assertEqual(result.returncode, 0)
-        self.assertFalse(any(command[0] == "docker" or command[1:2] == ["merge"] for command in commands))
+        self.assertFalse(any(command[0] == "docker" or "merge" in command for command in commands))
 
     def test_foreign_branch_and_dirty_checkouts_stop_before_fetch(self):
         for overrides in (
