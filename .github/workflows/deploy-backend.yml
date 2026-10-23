@@ -1,0 +1,77 @@
+name: Deploy backend
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-production
+  cancel-in-progress: false
+
+jobs:
+  quality:
+    uses: ./.github/workflows/quality.yml
+    secrets:
+      BACKEND_READ_KEY: ${{ secrets.BACKEND_READ_KEY }}
+      FRONTEND_READ_KEY: ${{ secrets.FRONTEND_READ_KEY }}
+
+  deploy:
+    name: Deploy backend through WireGuard
+    needs: quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install tunnel tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes wireguard-tools openssh-client
+      - name: Configure credentials
+        env:
+          WIREGUARD_CONFIG: ${{ secrets.VULTR_WIREGUARD }}
+          SSH_PRIVATE_KEY: ${{ secrets.VULTR_SSH_SECRET }}
+          SSH_KNOWN_HOSTS: ${{ vars.VULTR_SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          test -n "$WIREGUARD_CONFIG"
+          test -n "$SSH_PRIVATE_KEY"
+          test -n "$SSH_KNOWN_HOSTS"
+          umask 077
+          mkdir -p "$RUNNER_TEMP/gatekeeper-ssh"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$RUNNER_TEMP/gatekeeper-ssh/key"
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > "$RUNNER_TEMP/gatekeeper-ssh/known_hosts"
+          ssh-keygen -y -P '' -f "$RUNNER_TEMP/gatekeeper-ssh/key" > /dev/null
+          ssh-keygen -F 10.20.0.1 -f "$RUNNER_TEMP/gatekeeper-ssh/known_hosts" > /dev/null
+          printf '%s\n' "$WIREGUARD_CONFIG" | sudo install -m 600 /dev/stdin /etc/wireguard/gkci.conf
+      - name: Connect WireGuard
+        run: |
+          set -euo pipefail
+          sudo wg-quick up gkci
+          ip route get 10.20.0.1 | grep -q 'dev gkci'
+      - name: Deploy exact main revision
+        env:
+          DEPLOY_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          ssh -T -i "$RUNNER_TEMP/gatekeeper-ssh/key" \
+            -o BatchMode=yes -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile="$RUNNER_TEMP/gatekeeper-ssh/known_hosts" \
+            -o ConnectTimeout=30 -o ConnectionAttempts=3 \
+            -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
+            root@10.20.0.1 "bash -s -- $DEPLOY_SHA" < tools/ci/deploy-backend.sh
+      - name: Remove tunnel and credentials
+        if: always()
+        run: |
+          status=0
+          if ip link show gkci > /dev/null 2>&1; then
+            sudo wg-quick down gkci || status=$?
+          fi
+          sudo rm -f /etc/wireguard/gkci.conf
+          rm -rf "$RUNNER_TEMP/gatekeeper-ssh"
+          exit "$status"
