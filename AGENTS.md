@@ -10,7 +10,7 @@ Gatekeeper provides namespace-based API gateway routing, FlowAuth OAuth2 login, 
 - `gatekeeper-backend/` is a separate Git repository recorded as a submodule: NestJS 12, TypeScript, Express, TypeORM/MariaDB, Redis/Keyv 6 cache, scheduled metrics, and Jest.
 - `gatekeeper-frontend/` is a separate Git repository recorded as a submodule: SvelteKit 3, Svelte 5, Vite 8, TypeScript, Tailwind CSS 4, and Cloudflare/Node adapters.
 - Both apps consume the external npm package `flowauth-oauth2-client`. It is not a local shared-code submodule. Do not invent a `shared/` repository or pointer.
-- Node.js 24 is used by the application Dockerfiles and documented frontend deployment; use 24.15+ for the NestJS development toolchain. TypeScript remains 6.x until the lint/test/Svelte tools support 7.x. Run npm commands in the affected app directory, using a consistent Node/npm toolchain.
+- Node.js 24 is used by the application Dockerfiles and documented frontend deployment; use 24.22.1+ for the Node 24 development toolchain and Brotli security baseline. TypeScript remains 6.x until the lint/test/Svelte tools support 7.x. Run npm commands in the affected app directory, using a consistent Node/npm toolchain.
 - `docker-compose.yml` defines both apps, MariaDB, Redis, persistent volumes, and an external gateway network. `submodule_util.sh` changes submodule state; inspect it before use.
 
 Primary source locations:
