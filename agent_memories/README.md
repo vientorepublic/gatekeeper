@@ -28,7 +28,7 @@ Read the root [AGENTS.md](../AGENTS.md) and this index at the beginning of each 
 
 - [08 — Transitive audit remediation](08-transitive-audit-remediation/change.md) — resolved locally; Multer 2.5.0 and Undici 7.30.1 overrides, both full/production audits zero, 137 tests and Miniflare runtime smoke passed; topic 07 work preserved.
 
-- [09 — Security release validation](09-security-release-validation/change.md) — active; actual local app/browser validation passed, publishing 1.0.1 and verifying backend CI/Pages deployments.
+- [09 — Security release validation](09-security-release-validation/change.md) — resolved/deployed; app 1.0.1 and composition Releases published, actual local UI/HTTP and hosted backend/Pages checks passed, dev refs synchronized.
 
 Add new topics as `10-descriptive-topic/`, `11-another-topic/`, and so on. Classify note content as an investigation, plan, decision, or handoff; track `draft`, `active`, `blocked`, `resolved`, or `superseded` explicitly. A proposed plan is not an accepted architectural decision.
 
