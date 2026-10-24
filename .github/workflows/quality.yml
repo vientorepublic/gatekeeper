@@ -49,7 +49,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version-file: gatekeeper-${{ matrix.app }}/.node-version
           cache: npm
           cache-dependency-path: gatekeeper-${{ matrix.app }}/package-lock.json
       - name: Clean install

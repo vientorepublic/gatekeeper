@@ -1,6 +1,6 @@
 # Shared Agent Memory Index
 
-Last reviewed: 2026-10-23
+Last reviewed: 2026-10-24
 
 Read the root [AGENTS.md](../AGENTS.md) and this index at the beginning of each non-trivial task. These notes are versioned shared context. They do not synchronize private agent chats or standalone application clones.
 
@@ -24,7 +24,13 @@ Read the root [AGENTS.md](../AGENTS.md) and this index at the beginning of each 
 
 - [06 — Git synchronization guidelines](06-git-sync-guidelines/findings.md) — resolved; identified history-only reverse merge commits and defined protection-compliant fast-forward synchronization; follow-up publication includes development pointers, merged-feature cleanup policy, and origin/dev as the default pointer source.
 
-Add new topics as `07-descriptive-topic/`, `08-another-topic/`, and so on. Classify note content as an investigation, plan, decision, or handoff; track `draft`, `active`, `blocked`, `resolved`, or `superseded` explicitly. A proposed plan is not an accepted architectural decision.
+- [07 — Node2Shell runtime baseline](07-node2shell-runtime/change.md) — resolved locally; patched Node Docker/CI baseline, 137 passing tests, last deployed image digest matches Node 24.22.1; live container and full image builds unverified.
+
+- [08 — Transitive audit remediation](08-transitive-audit-remediation/change.md) — resolved locally; Multer 2.5.0 and Undici 7.30.1 overrides, both full/production audits zero, 137 tests and Miniflare runtime smoke passed; topic 07 work preserved.
+
+- [09 — Security release validation](09-security-release-validation/change.md) — active; actual local app/browser validation passed, publishing 1.0.1 and verifying backend CI/Pages deployments.
+
+Add new topics as `10-descriptive-topic/`, `11-another-topic/`, and so on. Classify note content as an investigation, plan, decision, or handoff; track `draft`, `active`, `blocked`, `resolved`, or `superseded` explicitly. A proposed plan is not an accepted architectural decision.
 
 ## Writing and sharing
 

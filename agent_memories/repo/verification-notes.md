@@ -2,14 +2,14 @@
 
 - Kind: repository reference
 - Status: current
-- Last verified: 2026-10-23
+- Last verified: 2026-10-24
 - Scope: actual package scripts and evidence limits
 
 ## Package gate
 
 App changes require an appropriate application version bump followed by `npm i`, then `npm ci`, then affected quality checks in that app. Compare lockfile checksums before/after `npm ci`; verify `package.json.version`, `package-lock.json.version`, and `package-lock.json.packages[""].version` agree. Commit the intended manifest and lockfile together.
 
-Use Node 24 consistently with the Dockerfiles; use 24.15+ for the NestJS development toolchain. No root npm package exists. Root documentation changes do not require app installations or bumps. Never describe a listed command as executed unless it actually ran against the relevant state.
+Use Node 24 consistently with the Dockerfiles; use 24.22.1+ for the Node 24 toolchain and Brotli security baseline. No root npm package exists. Root documentation changes do not require app installations or bumps. Never describe a listed command as executed unless it actually ran against the relevant state.
 
 ## Backend checks
 
@@ -79,3 +79,15 @@ private fetch scopes, isolated release checkout, Docker image build, backend con
 Healthy, host HTTP probe, and tunnel/credential cleanup. See [topic 04](../04-backend-ci-deployment/change.md)
 for immutable SHAs/run/release URLs and limitations. Production OAuth/upstream end-to-
 end behavior and frontend hosted Pages success are not established by these checks.
+
+## Node2Shell runtime baseline
+
+See [topic 07](../07-node2shell-runtime/change.md) for CVE-2026-111497 exposure
+tracing, local Docker/.node-version/CI hardening, stable-lock clean installs,
+137 passing tests, and both frontend adapter builds. The last recorded backend
+rollout image digest matches the official Node 24.22.1 image. This is historical
+deployment corroboration, not a live container inspection. The subsequent [transitive audit remediation](../08-transitive-audit-remediation/change.md)
+patches Multer and tooling Undici with narrow overrides; both current full and
+production audits report zero. The 137 app tests, both adapter builds and targeted
+Multer/Undici/Miniflare smoke passed for that final package state. Audit results
+are dated registry evidence and must be refreshed after dependency changes.
