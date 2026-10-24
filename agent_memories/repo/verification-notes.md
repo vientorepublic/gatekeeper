@@ -91,3 +91,14 @@ patches Multer and tooling Undici with narrow overrides; both current full and
 production audits report zero. The 137 app tests, both adapter builds and targeted
 Multer/Undici/Miniflare smoke passed for that final package state. Audit results
 are dated registry evidence and must be refreshed after dependency changes.
+
+## Security 1.0.1 deployed verification
+
+[Topic 09](../09-security-release-validation/change.md) records actual local built-app
+execution with isolated MariaDB/Redis, fixture OAuth and Brotli upstreams, browser
+key lifecycle validation, all hosted root CI checks, successful backend container
+replacement/health and Pages production deployment for exact app main SHAs. App
+v1.0.1 and root release-20261024.1 are published. Public backend health/auth/CORS
+and frontend SSR/assets/public API configuration passed. Real-account production
+OAuth/key workflows remain unverified. Post-release verification docs advance dev
+without modifying or republishing the immutable release composition.
