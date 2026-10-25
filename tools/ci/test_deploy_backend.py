@@ -108,25 +108,16 @@ class DeploymentTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(commands, [])
 
-    def test_ephemeral_fetch_credentials_do_not_enter_logs_or_persist(self):
-        result, commands = self.run_deploy(
-            GATEKEEPER_FETCH_TOKEN="synthetic-ci-token",
-            GATEKEEPER_BACKEND_READ_KEY="synthetic-private-key",
-            GATEKEEPER_GITHUB_HOST_KEYS="github.com ssh-ed25519 synthetic-public-key",
-        )
+    def test_public_fetch_and_submodule_update_use_https_without_credentials(self):
+        result, commands = self.run_deploy()
         self.assertEqual(result.returncode, 0, result.stderr)
-        output = result.stdout + result.stderr + json.dumps(commands)
-        self.assertNotIn("synthetic-ci-token", output)
-        self.assertNotIn("synthetic-private-key", output)
-        ssh_option = next(arg for command in commands for arg in command if arg.startswith("core.sshCommand="))
-        self.assertTrue(all("--recurse-submodules=no" in command for command in commands if "fetch" in command))
-        key_path = ssh_option.split(" -i ")[1].split(" ")[0]
-        self.assertFalse(Path(key_path).exists())
-
-    def test_backend_key_requires_verified_host_keys(self):
-        result, commands = self.run_deploy(GATEKEEPER_BACKEND_READ_KEY="synthetic-private-key")
-        self.assertNotEqual(result.returncode, 0)
-        self.assertFalse(any(command[0] == "docker" for command in commands))
+        fetch = next(command for command in commands if "fetch" in command)
+        self.assertEqual(fetch, ["git", "fetch", "--recurse-submodules=no", "--no-tags", "origin", "main"])
+        update = next(command for command in commands if "submodule" in command)
+        self.assertEqual(update[1], "-C")
+        self.assertEqual(update[3:], ["submodule", "update", "--init", "--recursive", "--", "gatekeeper-backend"])
+        self.assertFalse(any("credential.helper" in argument or "core.sshCommand" in argument
+                             or "insteadOf" in argument for command in commands for argument in command))
 
     def test_locates_unique_checkout_with_different_case_and_parent(self):
         result, _ = self.run_deploy(MOCK_PROJECT_PATH="projects/GateKeeper")

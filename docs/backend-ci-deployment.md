@@ -34,25 +34,16 @@
   `10.20.0.1 ssh-ed25519 <server-host-public-key>` 형식입니다. 서버의
   `/etc/ssh/ssh_host_ed25519_key.pub`를 기준으로 준비합니다. 실행 중 얻은 미검증 키로
   대체하지 않습니다. host key 변경 시 이 변수도 검증 후 갱신합니다.
-- Secrets `BACKEND_READ_KEY`, `FRONTEND_READ_KEY`: 각 앱 저장소의 `gatekeeper-root-ci`
-  읽기 전용 deploy key에 대응하는 SSH 개인키입니다. 루트 checkout은 기본
-  `GITHUB_TOKEN`의 `contents: read`를 사용하고, 각 앱 checkout에는 해당 앱 전용 키만
-  전달합니다. 기본 토큰의 저장소 범위를 확장하거나 운영 서버 키를 재사용하지 않습니다.
-  초기 설정은 gh로 완료했습니다. 키 교체 시 해당 앱 deploy key와 루트 secret을 함께
-  갱신해야 합니다. PAT는 필요하지 않습니다.
-
-PR 작업에는 WireGuard·SSH 배포 비밀값을 전달하지 않습니다. 읽기 키는 checkout에만
-사용하고 Git 설정에 저장하지 않습니다. fork PR·Dependabot PR 등 비밀값을 받지 못하는
-실행은 비공개 서브모듈을 가져올 수 없어 실패합니다. 이 경우 신뢰한 코드를 내부
-브랜치로 가져와 검사하며, `pull_request_target`으로 비밀값을 노출하는 방식은 사용하지 않습니다.
+루트와 두 앱 저장소는 public이며, 앱 checkout과 서버의 Git fetch는 공개 HTTPS 접근을
+사용합니다. 별도의 GitHub 읽기 토큰이나 앱 deploy key는 필요하지 않습니다.
+루트와 앱 checkout은 `persist-credentials: false`를 유지합니다.
+PR 검사에는 저장소 접근용 secret이 필요하지 않으므로 fork·Dependabot PR도 실행할 수
+있습니다. WireGuard·SSH 배포 비밀값은 main 배포 작업에서만 사용합니다.
 
 ## 필수 병합 차단 설정
 
-2026-10-23 확인 시 세 저장소 모두 비공개이며, GitHub API는 루트의 rulesets와
-main branch protection 조회에 `Upgrade to GitHub Pro or make this repository public`
-403을 반환했습니다. 현재 상태에서는 강제 병합 차단을 활성화할 수 없습니다.
-지원 요금제로 전환하거나 의도적으로 공개 범위를 변경한 뒤 아래 규칙을 설정해야 합니다.
-이번 작업에서는 요금제·공개 범위를 변경하지 않았습니다.
+2026-10-25 세 저장소의 public 전환을 확인했습니다. 이전 비공개 저장소 요금제의
+보호 규칙 제한은 과거 기록이며, 현재 규칙 활성화 여부는 별도로 확인해야 합니다.
 
 워크플로우 파일만으로는 GitHub의 병합 버튼이 차단되지 않습니다. 워크플로우를 반영하고
 PR에서 한 번 실행한 후, 루트 저장소 **Settings → Rules → Rulesets**에서 main과 dev를
@@ -77,11 +68,9 @@ PR에서 한 번 실행한 후, 루트 저장소 **Settings → Rules → Rulese
   기본 경로가 없다면 홈 디렉터리 3단계 이내에서 이름이 대소문자 구분 없이 Gatekeeper인
   Git/Compose clone을 찾습니다. 후보가 정확히 하나일 때만 사용하며 여러 clone 중 임의로
   선택하거나 새로 clone하지 않습니다.
-  워크플로우는 SSH 표준 입력으로 CI의 임시 루트 읽기 토큰과 백엔드 전용 읽기 키를
-  전달하므로 서버에 GitHub 자격 증명을 미리 저장할 필요가 없습니다. 토큰은 fetch
-  명령에만 임시 credential helper로 사용하고 Git 설정에 저장하지 않습니다. 백엔드 키는
-  임시 파일로 사용 후 실패 시에도 제거합니다. GitHub SSH host key는 runner가 HTTPS API로
-  검증해 전달하며 host 검증을 유지합니다. 서버에서 github.com에 연결할 수 있어야 합니다.
+  워크플로우는 SSH 표준 입력으로 배포 스크립트만 전달합니다. 루트 origin과
+  `.gitmodules`의 앱 URL은 공개 HTTPS 주소를 사용해야 하며, GitHub 읽기 자격 증명을
+  서버에 저장하거나 전달할 필요가 없습니다. 서버에서 github.com에 연결할 수 있어야 합니다.
   기존 checkout의 gitlink 변경은 별도 릴리즈 checkout으로 보존합니다. 그 외 메타/백엔드
   소스 수정은 자동 초기화하지 않고 배포를 실패시킵니다. 실제 서버 경로는 `/root/gatekeeper`입니다.
 - 릴리즈 checkout은 기존 앱/루트 `.env`를 symlink로 참조합니다. 기존 백엔드 컨테이너의
@@ -93,7 +82,7 @@ PR에서 한 번 실행한 후, 루트 저장소 **Settings → Rules → Rulese
 - 기존 Compose의 두 앱 `.env`, `gateway_shared_network`, 정상 DB·Redis가 필요합니다.
   환경 파일은 Git 추적에서 제외하세요. `config --quiet`는 설정 내용을 출력하지 않습니다.
   Compose 예제 DB 암호는 운영용으로 교체하고 `DB_SYNCHRONIZE=false`를 유지합니다.
-- 루트 gitlink는 두 앱의 검증된 `v1.0.0` main 커밋을 선택합니다. 앱의 새 변경을
+- 루트 gitlink는 두 앱의 검증된 main 커밋을 선택합니다. 앱의 새 변경을
   배포하려면 자식 저장소에서 먼저 검증·공개하고 루트 포인터를 갱신해야 합니다.
 - `/health`는 프로세스 응답 확인이며 DB·Redis·OAuth·업스트림 readiness를 보증하지
   않습니다. 재시작 중 중단이 발생할 수 있고 자동 rollback은 구현하지 않습니다.

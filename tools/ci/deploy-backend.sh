@@ -45,15 +45,7 @@ if [[ -e gatekeeper-backend/.git ]] &&
   exit 1
 fi
 
-if [[ -n "${GATEKEEPER_FETCH_TOKEN:-}" ]]; then
-  # Keep the short-lived root repository token out of Git configuration and arguments.
-  git -c credential.helper= \
-    -c 'credential.helper=!f() { printf "%s\n" "username=x-access-token" "password=$GATEKEEPER_FETCH_TOKEN"; }; f' \
-    fetch --recurse-submodules=no --no-tags origin main
-else
-  git fetch --recurse-submodules=no --no-tags origin main
-fi
-unset GATEKEEPER_FETCH_TOKEN
+git fetch --recurse-submodules=no --no-tags origin main
 if [[ "$(git rev-parse FETCH_HEAD)" != "$deploy_sha" ]]; then
   echo 'A newer main revision exists; skipping this superseded deployment.'
   exit 0
@@ -65,23 +57,7 @@ release_dir=$(mktemp -d "$HOME/.gatekeeper-releases/$deploy_sha.XXXXXX")
 git clone --no-hardlinks --no-checkout "$project_dir" "$release_dir"
 git -c submodule.recurse=false -C "$release_dir" checkout --detach "$deploy_sha"
 test "$(git -C "$release_dir" rev-parse HEAD)" = "$deploy_sha"
-if [[ -n "${GATEKEEPER_BACKEND_READ_KEY:-}" ]]; then
-  : "${GATEKEEPER_GITHUB_HOST_KEYS:?Verified GitHub SSH host keys are required}"
-  umask 077
-  credential_dir=$(mktemp -d)
-  trap 'rm -rf "$credential_dir"' EXIT
-  printf '%s\n' "$GATEKEEPER_BACKEND_READ_KEY" > "$credential_dir/backend-key"
-  printf '%s\n' "$GATEKEEPER_GITHUB_HOST_KEYS" > "$credential_dir/known_hosts"
-  unset GATEKEEPER_BACKEND_READ_KEY GATEKEEPER_GITHUB_HOST_KEYS
-  git -c url.ssh://git@github.com/.insteadOf=https://github.com/ \
-    -c "core.sshCommand=ssh -i $credential_dir/backend-key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$credential_dir/known_hosts" \
-    -C "$release_dir" \
-    submodule update --init --recursive -- gatekeeper-backend
-  rm -rf "$credential_dir"
-  trap - EXIT
-else
-  git -C "$release_dir" submodule update --init --recursive -- gatekeeper-backend
-fi
+git -C "$release_dir" submodule update --init --recursive -- gatekeeper-backend
 expected_backend=$(git -C "$release_dir" rev-parse HEAD:gatekeeper-backend)
 test "$(git -C "$release_dir/gatekeeper-backend" rev-parse HEAD)" = "$expected_backend"
 
