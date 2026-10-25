@@ -102,3 +102,12 @@ v1.0.1 and root release-20261024.1 are published. Public backend health/auth/COR
 and frontend SSR/assets/public API configuration passed. Real-account production
 OAuth/key workflows remain unverified. Post-release verification docs advance dev
 without modifying or republishing the immutable release composition.
+
+## Public repository CI access
+
+Verified 2026-10-25: all three repositories are PUBLIC and unauthenticated HTTPS
+ref lookups succeed. [Topic 10](../10-public-ci-access/change.md) removes private
+app checkout secrets and deployment GitHub token/key forwarding. The quality
+workflow needs no repository-read secret; server SSH/WireGuard credentials remain
+required. The final workflows passed actionlint and all 13 deployment script tests
+passed locally. Hosted Actions and production rollout were not run for this change.
