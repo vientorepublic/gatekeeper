@@ -110,4 +110,8 @@ ref lookups succeed. [Topic 10](../10-public-ci-access/change.md) removes privat
 app checkout secrets and deployment GitHub token/key forwarding. The quality
 workflow needs no repository-read secret; server SSH/WireGuard credentials remain
 required. The final workflows passed actionlint and all 13 deployment script tests
-passed locally. Hosted Actions and production rollout were not run for this change.
+passed locally. PRs #22/#23 and post-merge hosted quality checks passed. Deployment run
+40167706007 succeeded for exact root main 16c72f9; container Healthy, host/public
+health, unauthenticated denial and CORS passed. Composition release-20261025.1
+records immutable app pins. Main-to-dev fast-forward completed before the
+verification-docs follow-up.
