@@ -3,12 +3,12 @@
 - Kind: implementation handoff
 - Status: resolved
 - Stage: verified-local
-- Outcome: completed locally; commit and push requested
+- Outcome: implementation committed and pushed; PR/CI/dev integration in progress
 - Created / last verified: 2026-10-25
 - Type: removal
 - Scope: root workflows, deployment helper, regression tests, and operational documentation
 - Baseline: clean root dev `ce18cf8`; clean backend `3658bd1` and frontend `3bb100f`
-- Branch lifecycle: `feat/public-ci-checkout` from fetched origin/dev; push only, no promotion or deployment requested
+- Branch lifecycle: `feat/public-ci-checkout` from fetched origin/dev; user authorized PR creation, passing hosted CI, and dev integration; main promotion/deployment excluded
 - Related: [original deployment](../04-backend-ci-deployment/change.md), [setup guide](../../docs/backend-ci-deployment.md)
 
 ## Objective and boundaries
@@ -54,11 +54,14 @@ The standard Actions checkout token and `contents: read` remain managed by Actio
 - Root guideline scanner passed (114 files, 113 comments, 132 test titles before
   adding this note); diff whitespace and local documentation links checked.
 - No app source changes: npm gates and app builds/tests not applicable.
-- Hosted Actions and production deployment not run; no PR/main promotion requested.
+- Hosted Actions pending the newly requested PR; production deployment not requested.
 
 ## Publication and remaining work
 
-Commit and push the verified root feature branch with submodule remote checking.
+Implementation published as `ffb7e7e` on origin/feat/public-ci-checkout.
+Follow-up request: create its PR, verify hosted CI, and merge into dev.
+After integration, verify the merge commit and return local checkout to dev, then
+remove feature refs only after the repository lifecycle safety checks.
 No child commits or pointer updates are required. Before this feature, origin/main
 versus origin/dev was 0/2 with real verification-documentation changes; this task
 must not promote that existing work to main or attempt release synchronization.
