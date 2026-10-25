@@ -30,7 +30,7 @@ Read the root [AGENTS.md](../AGENTS.md) and this index at the beginning of each 
 
 - [09 — Security release validation](09-security-release-validation/change.md) — resolved/deployed; app 1.0.1 and composition Releases published, actual local UI/HTTP and hosted backend/Pages checks passed, dev refs synchronized.
 
-- [10 — Public repository CI access](10-public-ci-access/change.md) — verified locally; removes private checkout keys and deployment GitHub credential forwarding; implementation pushed; PR CI/dev integration in progress.
+- [10 — Public repository CI access](10-public-ci-access/change.md) — resolved/deployed; PRs #22/#23 and hosted CI passed, public-fetch backend rollout succeeded, release-20261025.1 published, main-to-dev fast-forward completed.
 
 Add new topics as `11-descriptive-topic/`, `12-another-topic/`, and so on. Classify note content as an investigation, plan, decision, or handoff; track `draft`, `active`, `blocked`, `resolved`, or `superseded` explicitly. A proposed plan is not an accepted architectural decision.
 
