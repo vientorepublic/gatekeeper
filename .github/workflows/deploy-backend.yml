@@ -14,9 +14,6 @@ concurrency:
 jobs:
   quality:
     uses: ./.github/workflows/quality.yml
-    secrets:
-      BACKEND_READ_KEY: ${{ secrets.BACKEND_READ_KEY }}
-      FRONTEND_READ_KEY: ${{ secrets.FRONTEND_READ_KEY }}
 
   deploy:
     name: Deploy backend through WireGuard
@@ -56,17 +53,9 @@ jobs:
       - name: Deploy exact main revision
         env:
           DEPLOY_SHA: ${{ github.sha }}
-          GH_TOKEN: ${{ github.token }}
-          BACKEND_READ_KEY: ${{ secrets.BACKEND_READ_KEY }}
         run: |
           set -euo pipefail
-          github_host_keys=$(gh api meta --jq '.ssh_keys[] | "github.com " + .')
-          {
-            printf 'export GATEKEEPER_FETCH_TOKEN=%q\n' "$GH_TOKEN"
-            printf 'export GATEKEEPER_BACKEND_READ_KEY=%q\n' "$BACKEND_READ_KEY"
-            printf 'export GATEKEEPER_GITHUB_HOST_KEYS=%q\n' "$github_host_keys"
-            cat tools/ci/deploy-backend.sh
-          } | ssh -T -i "$RUNNER_TEMP/gatekeeper-ssh/key" \
+          cat tools/ci/deploy-backend.sh | ssh -T -i "$RUNNER_TEMP/gatekeeper-ssh/key" \
             -o BatchMode=yes -o IdentitiesOnly=yes \
             -o StrictHostKeyChecking=yes \
             -o UserKnownHostsFile="$RUNNER_TEMP/gatekeeper-ssh/known_hosts" \
