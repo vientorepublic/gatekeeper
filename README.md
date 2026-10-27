@@ -43,10 +43,7 @@ git clone --recurse-submodules <root-repo-url>
 백엔드는 루트 main push 시 WireGuard와 SSH로 자동 배포하도록 구성합니다.
 시크릿·서버 준비와 PR 필수 검사 설정은 [백엔드 CI·배포 문서](docs/backend-ci-deployment.md)를 따르세요.
 
-프론트엔드는 SvelteKit Cloudflare 어댑터를 사용해 Cloudflare Pages에 배포합니다.
-Pages 프로젝트의 Root directory, Build command, Output directory와 환경 변수는
-`gatekeeper-frontend/README.md`의 [Cloudflare Pages 배포](gatekeeper-frontend/README.md#cloudflare-pages-배포)를
-따르세요.
+프론트엔드는 앱 저장소의 `main` 푸시를 GitHub Actions가 빌드해 기존 Cloudflare Pages 프로젝트로 배포합니다. Cloudflare의 Git 연결은 해제되어 비-main 푸시가 skipped 기록도 만들지 않습니다. `production` 환경의 Secret과 공개 빌드 변수 설정은 [프론트엔드 배포 문서](gatekeeper-frontend/docs/deployment.md#github-actions-프로덕션-배포)를 따르세요.
 
 ## 개발 워크플로우
 
