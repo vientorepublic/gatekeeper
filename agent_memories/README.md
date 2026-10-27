@@ -1,6 +1,6 @@
 # Shared Agent Memory Index
 
-Last reviewed: 2026-10-25
+Last reviewed: 2026-10-28
 
 Read the root [AGENTS.md](../AGENTS.md) and this index at the beginning of each non-trivial task. These notes are versioned shared context. They do not synchronize private agent chats or standalone application clones.
 
@@ -30,9 +30,9 @@ Read the root [AGENTS.md](../AGENTS.md) and this index at the beginning of each 
 
 - [09 — Security release validation](09-security-release-validation/change.md) — resolved/deployed; app 1.0.1 and composition Releases published, actual local UI/HTTP and hosted backend/Pages checks passed, dev refs synchronized.
 
-- [10 — Public repository CI access](10-public-ci-access/change.md) — verified locally; removes private checkout keys and deployment GitHub credential forwarding; implementation pushed; PR CI/dev integration in progress.
+- [10 — Public repository CI access](10-public-ci-access/change.md) — resolved/deployed; PRs #22/#23 and hosted CI passed, public-fetch backend rollout succeeded, release-20261025.1 published, main-to-dev fast-forward completed.
 
-Add new topics as `11-descriptive-topic/`, `12-another-topic/`, and so on. Classify note content as an investigation, plan, decision, or handoff; track `draft`, `active`, `blocked`, `resolved`, or `superseded` explicitly. A proposed plan is not an accepted architectural decision.
+Add new topics as `12-descriptive-topic/`, `13-another-topic/`, and so on. Classify note content as an investigation, plan, decision, or handoff; track `draft`, `active`, `blocked`, `resolved`, or `superseded` explicitly. A proposed plan is not an accepted architectural decision.
 
 ## Writing and sharing
 
@@ -44,3 +44,5 @@ Add new topics as `11-descriptive-topic/`, `12-another-topic/`, and so on. Class
 6. On completion, promote durable knowledge to `repo/`, mark plans/handoffs resolved or superseded, and link replacements. Avoid copying the same rules into several documents.
 
 All agents use this same index. Notes are advisory context; the root instructions and current source remain authoritative. See AGENTS.md section 8 for full rules.
+
+- [11 — Main-only Pages Actions](11-pages-production-actions/change.md) — resolved/deployed; main-only Actions uploads, disconnected native Git source, successful production deployments and a real non-main push with unchanged deployment IDs.

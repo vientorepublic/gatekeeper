@@ -81,3 +81,7 @@ for exact deployment and synchronization evidence and validation limits.
 ## Maintenance
 
 Update this note when repository topology, module boundaries, auth contracts, adapters, or deployment ownership changes. Check the current manifests for dependency versions; this note is a dated baseline, not a dependency inventory to keep manually synchronized on every patch.
+
+## Production Pages Actions (2026-10-28)
+
+Frontend 1.0.2 deploys through `gatekeeper-frontend/.github/workflows/deploy-pages.yml` on app main pushes only. Native Pages Git source is disconnected; both actual main deployment and a real non-main push with no skipped record were verified. The production environment credential is Pages Write only and restricted to main. See [topic 11](../11-pages-production-actions/change.md) for immutable release/run/deployment evidence.

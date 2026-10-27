@@ -2,13 +2,13 @@
 
 - Kind: implementation handoff
 - Status: resolved
-- Stage: verified-local
-- Outcome: implementation committed and pushed; PR/CI/dev integration in progress
+- Stage: deployed
+- Outcome: completed; main deployed and composition release published
 - Created / last verified: 2026-10-25
 - Type: removal
 - Scope: root workflows, deployment helper, regression tests, and operational documentation
 - Baseline: clean root dev `ce18cf8`; clean backend `3658bd1` and frontend `3bb100f`
-- Branch lifecycle: `feat/public-ci-checkout` from fetched origin/dev; user authorized PR creation, passing hosted CI, and dev integration; main promotion/deployment excluded
+- Branch lifecycle: `feat/public-ci-checkout` from fetched origin/dev; feature PR #22 merged into dev; user then authorized dev-to-main PR, passing CI, deployment, release, and dev synchronization
 - Related: [original deployment](../04-backend-ci-deployment/change.md), [setup guide](../../docs/backend-ci-deployment.md)
 
 ## Objective and boundaries
@@ -54,14 +54,47 @@ The standard Actions checkout token and `contents: read` remain managed by Actio
 - Root guideline scanner passed (114 files, 113 comments, 132 test titles before
   adding this note); diff whitespace and local documentation links checked.
 - No app source changes: npm gates and app builds/tests not applicable.
-- Hosted Actions pending the newly requested PR; production deployment not requested.
+- Feature PR #22 and promotion PR #23 passed hosted app checks, deployment script
+  checks, PR quality gate, and GitGuardian. Main deployment also passed all checks.
 
-## Publication and remaining work
+## Publication and hosted deployment
 
-Implementation published as `ffb7e7e` on origin/feat/public-ci-checkout.
-Follow-up request: create its PR, verify hosted CI, and merge into dev.
-After integration, verify the merge commit and return local checkout to dev, then
-remove feature refs only after the repository lifecycle safety checks.
-No child commits or pointer updates are required. Before this feature, origin/main
-versus origin/dev was 0/2 with real verification-documentation changes; this task
-must not promote that existing work to main or attempt release synchronization.
+Implementation `ffb7e7e` and integration record `cac1fde` merged through
+[PR #22](https://github.com/vientorepublic/gatekeeper/pull/22) into dev `76835b8`.
+[Promotion PR #23](https://github.com/vientorepublic/gatekeeper/pull/23) passed CI
+and merged with ancestry preserved into main
+`16c72f99654959bd63de89595cd35693303b3bc0`. The complete promotion diff also
+included the existing topic 09 deployment verification docs. App source, locks,
+versions, and gitlinks did not change; existing app v1.0.1 releases were reused.
+
+[Backend deployment run](https://github.com/vientorepublic/gatekeeper/actions/runs/40167706007)
+succeeded. Logs show public Git fetch/submodule checkout, successful image build,
+backend container Healthy at 2026-10-25 06:07:07 UTC (15:07:07 JST), host health
+probe, exact root/backend SHA confirmation, and tunnel/credential cleanup.
+
+[Composition release-20261025.1](https://github.com/vientorepublic/gatekeeper/releases/tag/release-20261025.1)
+is published, non-draft/non-prerelease. Its lightweight tag resolves to exact
+root main `16c72f99654959bd63de89595cd35693303b3bc0`, containing:
+
+- Backend v1.0.1: `3658bd1c15f992ed9e0422d54f139635bfc5f22a`.
+- Frontend v1.0.1: `3bb100fe01f55eb1c5a74850e74ddacf4812abd0`.
+
+Post-rollout curl checks passed public health 200 with status ok, unauthenticated
+namespace denial 401, frontend home 200, and preflight allowing the production
+frontend origin. An initial Python urllib health request returned 403; curl passed
+without infrastructure changes. The reason for this request-dependent difference
+was not established. No real-account OAuth/key mutation was performed, and health
+does not prove full database/upstream readiness. Frontend was not redeployed.
+
+## Development restoration
+
+After checking current refs, ancestry, successful checks, and absence of branch
+protection/rulesets, origin/dev was fast-forwarded with force=false to exact verified
+main `16c72f9`. Root main/dev were 0/0 with identical trees before this record.
+Both child main/dev remain equal to their release pins and local clean dev; no
+package state changed, so dependency reinstallation is not applicable.
+
+Feature refs for PR #22 were safely deleted after integration. Shared main/dev
+are retained. This documentation follow-up goes through a separate feature PR to
+dev; it records observed results without another deployment or release. Its dev-only
+content is real verification documentation, not missing application release work.
